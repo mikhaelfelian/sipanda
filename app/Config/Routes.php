@@ -36,4 +36,15 @@ $routes->group('serp', function ($routes) {
     $routes->get('searchAmazon', 'Serp::searchAmazon');
     $routes->get('customSearch', 'Serp::customSearch');
     $routes->post('analyzeNews', 'Serp::analyzeNews');
+    
+    // Maps search routes
+    $routes->get('maps', 'SerpMaps::index');
+    $routes->match(['get', 'post'], 'maps/search', 'SerpMaps::search');
+    
+    // Instagram search routes
+    $routes->get('instagram', 'SerpInstagram::index');
+    $routes->post('instagram/profiles', 'SerpInstagram::searchProfiles');
+    $routes->post('instagram/hashtags', 'SerpInstagram::searchHashtags');
+    $routes->get('instagram/profile/(:segment)', 'SerpInstagram::viewProfile/$1');
+    $routes->get('instagram/post/(:segment)', 'SerpInstagram::viewPost/$1');
 });

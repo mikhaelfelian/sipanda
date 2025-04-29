@@ -103,9 +103,18 @@ class Serp extends BaseController
             return view('admin-lte-3/serp/results', $data);
         } catch (\RuntimeException $e) {
             if (strpos($e->getMessage(), 'timed out') !== false) {
-                // Show a friendly message
-                return redirect()->back()->with('error', 'Search failed: The search service is currently unavailable. Please try again later.');
+                // Show a toast error for timeout
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Timeout koneksi ke Google API. Silakan coba lagi nanti.');
+            } else if (strpos($e->getMessage(), 'SERP API Error') !== false) {
+                // Show a toast error for other API errors
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Koneksi ke Google API gagal: ' . $e->getMessage());
             }
+            
+            // For other unexpected errors, rethrow
             throw $e;
         }
     }
