@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -150,8 +152,8 @@ class FileHandler extends BaseHandler
      */
     public function increment(string $key, int $offset = 1)
     {
-        $key = static::validateKey($key, $this->prefix);
-        $tmp = $this->getItem($key);
+        $prefixedKey = static::validateKey($key, $this->prefix);
+        $tmp         = $this->getItem($prefixedKey);
 
         if ($tmp === false) {
             $tmp = ['data' => 0, 'ttl' => 60];
@@ -222,8 +224,7 @@ class FileHandler extends BaseHandler
      * Does the heavy lifting of actually retrieving the file and
      * verifying it's age.
      *
-     * @return array<string, mixed>|false
-     * @phpstan-return array{data: mixed, ttl: int, time: int}|false
+     * @return array{data: mixed, ttl: int, time: int}|false
      */
     protected function getItem(string $filename)
     {
@@ -307,7 +308,7 @@ class FileHandler extends BaseHandler
             if ($filename !== '.' && $filename !== '..') {
                 if (is_dir($path . DIRECTORY_SEPARATOR . $filename) && $filename[0] !== '.') {
                     $this->deleteFiles($path . DIRECTORY_SEPARATOR . $filename, $delDir, $htdocs, $_level + 1);
-                } elseif ($htdocs !== true || ! preg_match('/^(\.htaccess|index\.(html|htm|php)|web\.config)$/i', $filename)) {
+                } elseif (! $htdocs || preg_match('/^(\.htaccess|index\.(html|htm|php)|web\.config)$/i', $filename) !== 1) {
                     @unlink($path . DIRECTORY_SEPARATOR . $filename);
                 }
             }
@@ -315,7 +316,7 @@ class FileHandler extends BaseHandler
 
         closedir($currentDir);
 
-        return ($delDir === true && $_level > 0) ? @rmdir($path) : true;
+        return ($delDir && $_level > 0) ? @rmdir($path) : true;
     }
 
     /**
@@ -336,13 +337,13 @@ class FileHandler extends BaseHandler
         $relativePath     = $sourceDir;
 
         if ($fp = @opendir($sourceDir)) {
-            // reset the array and make sure $source_dir has a trailing slash on the initial call
+            // reset the array and make sure $sourceDir has a trailing slash on the initial call
             if ($_recursion === false) {
                 $_filedata = [];
                 $sourceDir = rtrim(realpath($sourceDir) ?: $sourceDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
             }
 
-            // Used to be foreach (scandir($source_dir, 1) as $file), but scandir() is simply not as fast
+            // Used to be foreach (scandir($sourceDir, 1) as $file), but scandir() is simply not as fast
             while (false !== ($file = readdir($fp))) {
                 if (is_dir($sourceDir . $file) && $file[0] !== '.' && $topLevelOnly === false) {
                     $this->getDirFileInfo($sourceDir . $file . DIRECTORY_SEPARATOR, $topLevelOnly, true);

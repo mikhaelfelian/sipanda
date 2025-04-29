@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -65,7 +67,7 @@ abstract class BaseHandler implements CacheInterface
         }
 
         $reserved = config(Cache::class)->reservedCharacters ?? self::RESERVED_CHARACTERS;
-        if ($reserved && strpbrk($key, $reserved) !== false) {
+        if ($reserved !== '' && strpbrk($key, $reserved) !== false) {
             throw new InvalidArgumentException('Cache key contains reserved characters ' . $reserved);
         }
 
@@ -76,10 +78,9 @@ abstract class BaseHandler implements CacheInterface
     /**
      * Get an item from the cache, or execute the given Closure and store the result.
      *
-     * @param string  $key      Cache item name
-     * @param int     $ttl      Time to live
-     * @param Closure $callback Callback return value
-     * @phpstan-param Closure(): mixed $callback
+     * @param string           $key      Cache item name
+     * @param int              $ttl      Time to live
+     * @param Closure(): mixed $callback Callback return value
      *
      * @return array|bool|float|int|object|string|null
      */

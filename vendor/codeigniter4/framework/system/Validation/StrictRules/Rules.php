@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Validation\StrictRules;
 
+use CodeIgniter\Helpers\Array\ArrayHelper;
 use CodeIgniter\Validation\Rules as NonStrictRules;
 use Config\Database;
 
@@ -23,7 +24,7 @@ use Config\Database;
  */
 class Rules
 {
-    private NonStrictRules $nonStrictRules;
+    private readonly NonStrictRules $nonStrictRules;
 
     public function __construct()
     {
@@ -36,13 +37,30 @@ class Rules
      * @param array|bool|float|int|object|string|null $str
      * @param array                                   $data Other field/value pairs
      */
-    public function differs($str, string $field, array $data): bool
-    {
-        if (! is_string($str)) {
+    public function differs(
+        $str,
+        string $otherField,
+        array $data,
+        ?string $error = null,
+        ?string $field = null
+    ): bool {
+        if (str_contains($otherField, '.')) {
+            return $str !== dot_array_search($otherField, $data);
+        }
+
+        if (! array_key_exists($otherField, $data)) {
             return false;
         }
 
-        return $this->nonStrictRules->differs($str, $field, $data);
+        if (str_contains($field, '.')) {
+            if (! ArrayHelper::dotKeyExists($field, $data)) {
+                return false;
+            }
+        } elseif (! array_key_exists($field, $data)) {
+            return false;
+        }
+
+        return $str !== ($data[$otherField] ?? null);
     }
 
     /**
@@ -144,8 +162,9 @@ class Rules
             ->limit(1);
 
         if (
-            ! empty($whereField) && ! empty($whereValue)
-            && ! preg_match('/^\{(\w+)\}$/', $whereValue)
+            $whereField !== null && $whereField !== ''
+            && $whereValue !== null && $whereValue !== ''
+            && preg_match('/^\{(\w+)\}$/', $whereValue) !== 1
         ) {
             $row = $row->where($whereField, $whereValue);
         }
@@ -203,8 +222,9 @@ class Rules
             ->limit(1);
 
         if (
-            ! empty($ignoreField) && ! empty($ignoreValue)
-            && ! preg_match('/^\{(\w+)\}$/', $ignoreValue)
+            $ignoreField !== null && $ignoreField !== ''
+            && $ignoreValue !== null && $ignoreValue !== ''
+            && preg_match('/^\{(\w+)\}$/', $ignoreValue) !== 1
         ) {
             $row = $row->where("{$ignoreField} !=", $ignoreValue);
         }
@@ -254,9 +274,30 @@ class Rules
      * @param array|bool|float|int|object|string|null $str
      * @param array                                   $data Other field/value pairs
      */
-    public function matches($str, string $field, array $data): bool
-    {
-        return $this->nonStrictRules->matches($str, $field, $data);
+    public function matches(
+        $str,
+        string $otherField,
+        array $data,
+        ?string $error = null,
+        ?string $field = null
+    ): bool {
+        if (str_contains($otherField, '.')) {
+            return $str === dot_array_search($otherField, $data);
+        }
+
+        if (! array_key_exists($otherField, $data)) {
+            return false;
+        }
+
+        if (str_contains($field, '.')) {
+            if (! ArrayHelper::dotKeyExists($field, $data)) {
+                return false;
+            }
+        } elseif (! array_key_exists($field, $data)) {
+            return false;
+        }
+
+        return $str === ($data[$otherField] ?? null);
     }
 
     /**
@@ -372,5 +413,27 @@ class Rules
         ?string $field = null
     ): bool {
         return $this->nonStrictRules->required_without($str, $otherFields, $data, $error, $field);
+    }
+
+    /**
+     * The field exists in $data.
+     *
+     * @param array|bool|float|int|object|string|null $value The field value.
+     * @param string|null                             $param The rule's parameter.
+     * @param array                                   $data  The data to be validated.
+     * @param string|null                             $field The field name.
+     */
+    public function field_exists(
+        $value = null,
+        ?string $param = null,
+        array $data = [],
+        ?string $error = null,
+        ?string $field = null
+    ): bool {
+        if (str_contains($field, '.')) {
+            return ArrayHelper::dotKeyExists($field, $data);
+        }
+
+        return array_key_exists($field, $data);
     }
 }

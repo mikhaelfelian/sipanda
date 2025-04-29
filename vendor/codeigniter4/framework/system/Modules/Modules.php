@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -37,7 +39,7 @@ class Modules
     /**
      * Auto-Discover Rules Handler
      *
-     * @var array
+     * @var list<string>
      */
     public $aliases = [];
 

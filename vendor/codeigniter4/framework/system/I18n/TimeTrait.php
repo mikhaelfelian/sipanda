@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -71,7 +73,7 @@ trait TimeTrait
      */
     public function __construct(?string $time = null, $timezone = null, ?string $locale = null)
     {
-        $this->locale = $locale ?: Locale::getDefault();
+        $this->locale = $locale !== null && $locale !== '' && $locale !== '0' ? $locale : Locale::getDefault();
 
         $time ??= '';
 
@@ -212,14 +214,22 @@ trait TimeTrait
      *
      * @throws Exception
      */
-    public static function create(?int $year = null, ?int $month = null, ?int $day = null, ?int $hour = null, ?int $minutes = null, ?int $seconds = null, $timezone = null, ?string $locale = null)
-    {
+    public static function create(
+        ?int $year = null,
+        ?int $month = null,
+        ?int $day = null,
+        ?int $hour = null,
+        ?int $minutes = null,
+        ?int $seconds = null,
+        $timezone = null,
+        ?string $locale = null
+    ) {
         $year ??= date('Y');
         $month ??= date('m');
         $day ??= date('d');
-        $hour    = empty($hour) ? 0 : $hour;
-        $minutes = empty($minutes) ? 0 : $minutes;
-        $seconds = empty($seconds) ? 0 : $seconds;
+        $hour ??= 0;
+        $minutes ??= 0;
+        $seconds ??= 0;
 
         return new self(date('Y-m-d H:i:s', strtotime("{$year}-{$month}-{$day} {$hour}:{$minutes}:{$seconds}")), $timezone, $locale);
     }
@@ -254,14 +264,28 @@ trait TimeTrait
      * @return self
      *
      * @throws Exception
-     */
+     *
     public static function createFromTimestamp(int $timestamp, $timezone = null, ?string $locale = null)
     {
         $time = new self(gmdate('Y-m-d H:i:s', $timestamp), 'UTC', $locale);
-        $timezone ??= 'UTC';
+
+        $timezone ??= date_default_timezone_get();
 
         return $time->setTimezone($timezone);
     }
+	*/
+	public static function createFromTimestamp(int|float $timestamp, $timezone = null, ?string $locale = null){
+    // If a timezone is not passed, use the default timezone
+    if ($timezone === null) {
+        $timezone = new \DateTimeZone(date_default_timezone_get());
+    }
+
+    // Create a DateTimeImmutable object from the timestamp
+    $dateTime = new \DateTimeImmutable('@' . $timestamp, $timezone);
+
+    // Return a new instance of your class, assuming it's using TimeTrait
+    return new self($dateTime->format('Y-m-d H:i:s'), $timezone, $locale);
+	}
 
     /**
      * Takes an instance of DateTimeInterface and returns an instance of Time with it's same values.
@@ -543,7 +567,7 @@ trait TimeTrait
     public function setMonth($value)
     {
         if (is_numeric($value) && ($value < 1 || $value > 12)) {
-            throw I18nException::forInvalidMonth($value);
+            throw I18nException::forInvalidMonth((string) $value);
         }
 
         if (is_string($value) && ! is_numeric($value)) {
@@ -565,13 +589,13 @@ trait TimeTrait
     public function setDay($value)
     {
         if ($value < 1 || $value > 31) {
-            throw I18nException::forInvalidDay($value);
+            throw I18nException::forInvalidDay((string) $value);
         }
 
         $date    = $this->getYear() . '-' . $this->getMonth();
         $lastDay = date('t', strtotime($date));
         if ($value > $lastDay) {
-            throw I18nException::forInvalidOverDay($lastDay, $value);
+            throw I18nException::forInvalidOverDay($lastDay, (string) $value);
         }
 
         return $this->setValue('day', $value);
@@ -589,7 +613,7 @@ trait TimeTrait
     public function setHour($value)
     {
         if ($value < 0 || $value > 23) {
-            throw I18nException::forInvalidHour($value);
+            throw I18nException::forInvalidHour((string) $value);
         }
 
         return $this->setValue('hour', $value);
@@ -607,7 +631,7 @@ trait TimeTrait
     public function setMinute($value)
     {
         if ($value < 0 || $value > 59) {
-            throw I18nException::forInvalidMinutes($value);
+            throw I18nException::forInvalidMinutes((string) $value);
         }
 
         return $this->setValue('minute', $value);
@@ -625,7 +649,7 @@ trait TimeTrait
     public function setSecond($value)
     {
         if ($value < 0 || $value > 59) {
-            throw I18nException::forInvalidSeconds($value);
+            throw I18nException::forInvalidSeconds((string) $value);
         }
 
         return $this->setValue('second', $value);
@@ -947,7 +971,7 @@ trait TimeTrait
         if ($testTime instanceof DateTimeInterface) {
             $testTime = $testTime->format('Y-m-d H:i:s');
         } elseif (is_string($testTime)) {
-            $timezone = $timezone ?: $this->timezone;
+            $timezone = $timezone !== null && $timezone !== '' && $timezone !== '0' ? $timezone : $this->timezone;
             $timezone = $timezone instanceof DateTimeZone ? $timezone : new DateTimeZone($timezone);
             $testTime = new DateTime($testTime, $timezone);
             $testTime = $testTime->format('Y-m-d H:i:s');
@@ -1008,7 +1032,7 @@ trait TimeTrait
      */
     public function humanize()
     {
-        $now  = IntlCalendar::fromDateTime(self::now($this->timezone));
+        $now  = IntlCalendar::fromDateTime(self::now($this->timezone)->toDateTime());
         $time = $this->getCalendar()->getTime();
 
         $years   = $now->fieldDifference($time, IntlCalendar::FIELD_YEAR);
@@ -1060,8 +1084,21 @@ trait TimeTrait
      */
     public function difference($testTime, ?string $timezone = null)
     {
-        $testTime = $this->getUTCObject($testTime, $timezone);
-        $ourTime  = $this->getUTCObject($this);
+        if (is_string($testTime)) {
+            $timezone = ($timezone !== null) ? new DateTimeZone($timezone) : $this->timezone;
+            $testTime = new DateTime($testTime, $timezone);
+        } elseif ($testTime instanceof self) {
+            $testTime = $testTime->toDateTime();
+        }
+
+        assert($testTime instanceof DateTime);
+
+        if ($this->timezone->getOffset($this) !== $testTime->getTimezone()->getOffset($this)) {
+            $testTime = $this->getUTCObject($testTime, $timezone);
+            $ourTime  = $this->getUTCObject($this);
+        } else {
+            $ourTime = $this->toDateTime();
+        }
 
         return new TimeDifference($ourTime, $testTime);
     }
@@ -1084,7 +1121,7 @@ trait TimeTrait
         if ($time instanceof self) {
             $time = $time->toDateTime();
         } elseif (is_string($time)) {
-            $timezone = $timezone ?: $this->timezone;
+            $timezone = $timezone !== null && $timezone !== '' && $timezone !== '0' ? $timezone : $this->timezone;
             $timezone = $timezone instanceof DateTimeZone ? $timezone : new DateTimeZone($timezone);
             $time     = new DateTime($time, $timezone);
         }
@@ -1109,7 +1146,7 @@ trait TimeTrait
      */
     public function getCalendar()
     {
-        return IntlCalendar::fromDateTime($this);
+        return IntlCalendar::fromDateTime($this->toDateTime());
     }
 
     /**
@@ -1144,7 +1181,7 @@ trait TimeTrait
      *
      * @param string $name
      *
-     * @return array|bool|DateTimeInterface|DateTimeZone|int|intlCalendar|self|string|null
+     * @return array|bool|DateTimeInterface|DateTimeZone|int|IntlCalendar|self|string|null
      */
     public function __get($name)
     {
@@ -1182,6 +1219,8 @@ trait TimeTrait
         $timezone = $this->timezone;
 
         $this->timezone = new DateTimeZone($timezone);
+
+        // @phpstan-ignore-next-line `$this->date` is a special property for PHP internal use.
         parent::__construct($this->date, $this->timezone);
     }
 }

@@ -175,6 +175,12 @@ class Migration_Install_ion_auth extends \CodeIgniter\Database\Migration
 				'constraint' => '20',
 				'null'       => true,
 			],
+			'type' => [
+				'type'       => 'ENUM',
+				'constraint' => ['1', '2'],
+				'default'    => '1',
+				'comment'    => '1 = employees, 2 = patient',
+			],
 		]);
 		$this->forge->addKey('id', true);
 		$this->forge->createTable($this->tables['users'], false);
@@ -200,6 +206,10 @@ class Migration_Install_ion_auth extends \CodeIgniter\Database\Migration
 				'constraint' => '8',
 				'unsigned'   => true,
 			],
+			'access' => [
+				'type'       => 'TEXT',
+				'null'       => true
+			]
 		]);
 		$this->forge->addKey('id', true);
 

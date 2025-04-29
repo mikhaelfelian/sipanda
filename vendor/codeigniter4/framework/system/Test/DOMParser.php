@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -176,6 +178,24 @@ class DOMParser
     }
 
     /**
+     * Checks to see if the XPath can be found.
+     */
+    public function seeXPath(string $path): bool
+    {
+        $xpath = new DOMXPath($this->dom);
+
+        return (bool) $xpath->query($path)->length;
+    }
+
+    /**
+     * Checks to see if the XPath can't be found.
+     */
+    public function dontSeeXPath(string $path): bool
+    {
+        return ! $this->seeXPath($path);
+    }
+
+    /**
      * Search the DOM using an XPath expression.
      *
      * @return DOMNodeList|false
@@ -189,23 +209,23 @@ class DOMParser
         $path = '';
 
         // By ID
-        if (! empty($selector['id'])) {
-            $path = empty($selector['tag'])
+        if (isset($selector['id'])) {
+            $path = ($selector['tag'] === '')
                 ? "id(\"{$selector['id']}\")"
                 : "//{$selector['tag']}[@id=\"{$selector['id']}\"]";
         }
         // By Class
-        elseif (! empty($selector['class'])) {
-            $path = empty($selector['tag'])
+        elseif (isset($selector['class'])) {
+            $path = ($selector['tag'] === '')
                 ? "//*[@class=\"{$selector['class']}\"]"
                 : "//{$selector['tag']}[@class=\"{$selector['class']}\"]";
         }
         // By tag only
-        elseif (! empty($selector['tag'])) {
+        elseif ($selector['tag'] !== '') {
             $path = "//{$selector['tag']}";
         }
 
-        if (! empty($selector['attr'])) {
+        if (isset($selector['attr'])) {
             foreach ($selector['attr'] as $key => $value) {
                 $path .= "[@{$key}=\"{$value}\"]";
             }
@@ -213,7 +233,7 @@ class DOMParser
 
         // $paths might contain a number of different
         // ready to go xpath portions to tack on.
-        if (! empty($paths) && is_array($paths)) {
+        if ($paths !== [] && is_array($paths)) {
             foreach ($paths as $extra) {
                 $path .= $extra;
             }
@@ -231,7 +251,7 @@ class DOMParser
     /**
      * Look for the a selector  in the passed text.
      *
-     * @return array
+     * @return array{tag: string, id: string|null, class: string|null, attr: array<string, string>|null}
      */
     public function parseSelector(string $selector)
     {
@@ -240,11 +260,11 @@ class DOMParser
         $attr  = null;
 
         // ID?
-        if (strpos($selector, '#') !== false) {
+        if (str_contains($selector, '#')) {
             [$tag, $id] = explode('#', $selector);
         }
         // Attribute
-        elseif (strpos($selector, '[') !== false && strpos($selector, ']') !== false) {
+        elseif (str_contains($selector, '[') && str_contains($selector, ']')) {
             $open  = strpos($selector, '[');
             $close = strpos($selector, ']');
 
@@ -262,7 +282,7 @@ class DOMParser
             $attr  = [$name => trim($value, '] ')];
         }
         // Class?
-        elseif (strpos($selector, '.') !== false) {
+        elseif (str_contains($selector, '.')) {
             [$tag, $class] = explode('.', $selector);
         }
         // Otherwise, assume the entire string is our tag

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -70,9 +72,7 @@ class MemcachedHandler extends BaseHandler
             $this->keyPrefix .= $this->ipAddress . ':';
         }
 
-        if (! empty($this->keyPrefix)) {
-            ini_set('memcached.sess_prefix', $this->keyPrefix);
-        }
+        ini_set('memcached.sess_prefix', $this->keyPrefix);
     }
 
     /**
@@ -93,12 +93,12 @@ class MemcachedHandler extends BaseHandler
         }
 
         if (
-            ! preg_match_all(
+            preg_match_all(
                 '#,?([^,:]+)\:(\d{1,5})(?:\:(\d+))?#',
                 $this->savePath,
                 $matches,
                 PREG_SET_ORDER
-            )
+            ) === 0
         ) {
             $this->memcached = null;
             $this->logger->error('Session: Invalid Memcached save path format: ' . $this->savePath);
@@ -125,7 +125,7 @@ class MemcachedHandler extends BaseHandler
             }
         }
 
-        if (empty($serverList)) {
+        if ($serverList === []) {
             $this->logger->error('Session: Memcached server pool is empty.');
 
             return false;
@@ -267,7 +267,7 @@ class MemcachedHandler extends BaseHandler
         $attempt = 0;
 
         do {
-            if ($this->memcached->get($lockKey)) {
+            if ($this->memcached->get($lockKey) !== false) {
                 sleep(1);
 
                 continue;

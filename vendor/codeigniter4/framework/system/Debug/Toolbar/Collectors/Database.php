@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -80,7 +82,6 @@ class Database extends BaseCollector
      * @internal
      *
      * @return void
-     * @phpstan-return never|void
      */
     public static function collect(Query $query)
     {
@@ -147,7 +148,7 @@ class Database extends BaseCollector
     public function display(): array
     {
         $data            = [];
-        $data['queries'] = array_map(static function (array $query) {
+        $data['queries'] = array_map(static function (array $query): array {
             $isDuplicate = $query['duplicate'] === true;
 
             $firstNonSystemLine = '';
@@ -162,7 +163,7 @@ class Database extends BaseCollector
                 }
 
                 // find the first trace line that does not originate from `system/`
-                if ($firstNonSystemLine === '' && strpos($line['file'], 'SYSTEMPATH') === false) {
+                if ($firstNonSystemLine === '' && ! str_contains($line['file'], 'SYSTEMPATH')) {
                     $firstNonSystemLine = $line['file'];
                 }
 
@@ -217,7 +218,7 @@ class Database extends BaseCollector
         $this->getConnections();
 
         $queryCount      = count(static::$queries);
-        $uniqueCount     = count(array_filter(static::$queries, static fn ($query) => $query['duplicate'] === false));
+        $uniqueCount     = count(array_filter(static::$queries, static fn ($query): bool => $query['duplicate'] === false));
         $connectionCount = count($this->connections);
 
         return sprintf(
@@ -236,7 +237,7 @@ class Database extends BaseCollector
      */
     public function isEmpty(): bool
     {
-        return empty(static::$queries);
+        return static::$queries === [];
     }
 
     /**

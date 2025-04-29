@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -22,7 +24,7 @@ trait ViewDecoratorTrait
      */
     protected function decorateOutput(string $html): string
     {
-        $decorators = \config(ViewConfig::class)->decorators;
+        $decorators = $this->config->decorators ?? config(ViewConfig::class)->decorators;
 
         foreach ($decorators as $decorator) {
             if (! is_subclass_of($decorator, ViewDecoratorInterface::class)) {
