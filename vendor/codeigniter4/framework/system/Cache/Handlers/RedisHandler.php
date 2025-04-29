@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -114,12 +112,22 @@ class RedisHandler extends BaseHandler
             return null;
         }
 
-        return match ($data['__ci_type']) {
-            'array', 'object' => unserialize($data['__ci_value']),
-            // Yes, 'double' is returned and NOT 'float'
-            'boolean', 'integer', 'double', 'string', 'NULL' => settype($data['__ci_value'], $data['__ci_type']) ? $data['__ci_value'] : null,
-            default => null,
-        };
+        switch ($data['__ci_type']) {
+            case 'array':
+            case 'object':
+                return unserialize($data['__ci_value']);
+
+            case 'boolean':
+            case 'integer':
+            case 'double': // Yes, 'double' is returned and NOT 'float'
+            case 'string':
+            case 'NULL':
+                return settype($data['__ci_value'], $data['__ci_type']) ? $data['__ci_value'] : null;
+
+            case 'resource':
+            default:
+                return null;
+        }
     }
 
     /**
@@ -237,7 +245,6 @@ class RedisHandler extends BaseHandler
         if ($value !== null) {
             $time = Time::now()->getTimestamp();
             $ttl  = $this->redis->ttl(static::validateKey($key, $this->prefix));
-            assert(is_int($ttl));
 
             return [
                 'expire' => $ttl > 0 ? $time + $ttl : null,

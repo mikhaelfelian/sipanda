@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -21,14 +19,14 @@ use Throwable;
 /**
  * BaseCommand is the base class used in creating CLI commands.
  *
- * @property array<string, string> $arguments
- * @property Commands              $commands
- * @property string                $description
- * @property string                $group
- * @property LoggerInterface       $logger
- * @property string                $name
- * @property array<string, string> $options
- * @property string                $usage
+ * @property array           $arguments
+ * @property Commands        $commands
+ * @property string          $description
+ * @property string          $group
+ * @property LoggerInterface $logger
+ * @property string          $name
+ * @property array           $options
+ * @property string          $usage
  */
 abstract class BaseCommand
 {
@@ -64,14 +62,14 @@ abstract class BaseCommand
     /**
      * the Command's options description
      *
-     * @var array<string, string>
+     * @var array
      */
     protected $options = [];
 
     /**
      * the Command's Arguments description
      *
-     * @var array<string, string>
+     * @var array
      */
     protected $arguments = [];
 
@@ -108,8 +106,6 @@ abstract class BaseCommand
     /**
      * Can be used by a command to run other commands.
      *
-     * @param array<int|string, string|null> $params
-     *
      * @return int|void
      *
      * @throws ReflectionException
@@ -142,25 +138,25 @@ abstract class BaseCommand
     {
         CLI::write(lang('CLI.helpUsage'), 'yellow');
 
-        if (isset($this->usage)) {
+        if (! empty($this->usage)) {
             $usage = $this->usage;
         } else {
             $usage = $this->name;
 
-            if ($this->arguments !== []) {
+            if (! empty($this->arguments)) {
                 $usage .= ' [arguments]';
             }
         }
 
         CLI::write($this->setPad($usage, 0, 0, 2));
 
-        if (isset($this->description)) {
+        if (! empty($this->description)) {
             CLI::newLine();
             CLI::write(lang('CLI.helpDescription'), 'yellow');
             CLI::write($this->setPad($this->description, 0, 0, 2));
         }
 
-        if ($this->arguments !== []) {
+        if (! empty($this->arguments)) {
             CLI::newLine();
             CLI::write(lang('CLI.helpArguments'), 'yellow');
             $length = max(array_map('strlen', array_keys($this->arguments)));
@@ -170,7 +166,7 @@ abstract class BaseCommand
             }
         }
 
-        if ($this->options !== []) {
+        if (! empty($this->options)) {
             CLI::newLine();
             CLI::write(lang('CLI.helpOptions'), 'yellow');
             $length = max(array_map('strlen', array_keys($this->options)));
@@ -196,8 +192,6 @@ abstract class BaseCommand
     /**
      * Get pad for $key => $value array output
      *
-     * @param array<string, string> $array
-     *
      * @deprecated Use setPad() instead.
      *
      * @codeCoverageIgnore
@@ -216,7 +210,7 @@ abstract class BaseCommand
     /**
      * Makes it simple to access our protected properties.
      *
-     * @return array<string, string>|Commands|LoggerInterface|string|null
+     * @return array|Commands|LoggerInterface|string|null
      */
     public function __get(string $key)
     {

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of CodeIgniter 4 framework.
  *
@@ -292,7 +290,7 @@ class Services extends BaseService
 
         $config ??= config(FiltersConfig::class);
 
-        return new Filters($config, AppServices::get('request'), AppServices::get('response'));
+        return new Filters($config, AppServices::request(), AppServices::response());
     }
 
     /**
@@ -330,7 +328,7 @@ class Services extends BaseService
 
     /**
      * Acts as a factory for ImageHandler classes and returns an instance
-     * of the handler. Used like service('image')->withFile($path)->rotate(90)->save();
+     * of the handler. Used like Services::image()->withFile($path)->rotate(90)->save();
      *
      * @return BaseHandler
      */
@@ -376,8 +374,8 @@ class Services extends BaseService
             return static::getSharedInstance('language', $locale)->setLocale($locale);
         }
 
-        if (AppServices::get('request') instanceof IncomingRequest) {
-            $requestLocale = AppServices::get('request')->getLocale();
+        if (AppServices::request() instanceof IncomingRequest) {
+            $requestLocale = AppServices::request()->getLocale();
         } else {
             $requestLocale = Locale::getDefault();
         }
@@ -432,7 +430,7 @@ class Services extends BaseService
             return static::getSharedInstance('negotiator', $request);
         }
 
-        $request ??= AppServices::get('request');
+        $request ??= AppServices::request();
 
         return new Negotiate($request);
     }
@@ -449,7 +447,7 @@ class Services extends BaseService
         }
 
         $config ??= config(Cache::class);
-        $cache ??= AppServices::get('cache');
+        $cache ??= AppServices::cache();
 
         return new ResponseCache($config, $cache);
     }
@@ -485,7 +483,7 @@ class Services extends BaseService
         $viewPath = $viewPath ?: (new Paths())->viewDirectory;
         $config ??= config(ViewConfig::class);
 
-        return new Parser($config, $viewPath, AppServices::get('locator'), CI_DEBUG, AppServices::get('logger'));
+        return new Parser($config, $viewPath, AppServices::locator(), CI_DEBUG, AppServices::logger());
     }
 
     /**
@@ -504,7 +502,7 @@ class Services extends BaseService
         $viewPath = $viewPath ?: (new Paths())->viewDirectory;
         $config ??= config(ViewConfig::class);
 
-        return new View($config, $viewPath, AppServices::get('locator'), CI_DEBUG, AppServices::get('logger'));
+        return new View($config, $viewPath, AppServices::locator(), CI_DEBUG, AppServices::logger());
     }
 
     /**
@@ -544,7 +542,7 @@ class Services extends BaseService
             $request->setProtocolVersion($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1');
         }
 
-        // Inject the request object into Services.
+        // Inject the request object into Services::request().
         static::$instances['request'] = $request;
     }
 
@@ -565,7 +563,7 @@ class Services extends BaseService
 
         return new IncomingRequest(
             $config,
-            AppServices::get('uri'),
+            AppServices::uri(),
             'php://input',
             new UserAgent()
         );
@@ -600,7 +598,7 @@ class Services extends BaseService
 
         $config ??= config(App::class);
         $response = new RedirectResponse($config);
-        $response->setProtocolVersion(AppServices::get('request')->getProtocolVersion());
+        $response->setProtocolVersion(AppServices::request()->getProtocolVersion());
 
         return $response;
     }
@@ -617,7 +615,7 @@ class Services extends BaseService
             return static::getSharedInstance('routes');
         }
 
-        return new RouteCollection(AppServices::get('locator'), config(Modules::class), config(Routing::class));
+        return new RouteCollection(AppServices::locator(), config(Modules::class), config(Routing::class));
     }
 
     /**
@@ -632,8 +630,8 @@ class Services extends BaseService
             return static::getSharedInstance('router', $routes, $request);
         }
 
-        $routes ??= AppServices::get('routes');
-        $request ??= AppServices::get('request');
+        $routes ??= AppServices::routes();
+        $request ??= AppServices::request();
 
         return new Router($routes, $request);
     }
@@ -668,7 +666,7 @@ class Services extends BaseService
 
         $config ??= config(SessionConfig::class);
 
-        $logger = AppServices::get('logger');
+        $logger = AppServices::logger();
 
         $driverName = $config->driver;
 
@@ -685,19 +683,13 @@ class Services extends BaseService
             }
         }
 
-        $driver = new $driverName($config, AppServices::get('request')->getIPAddress());
+        $driver = new $driverName($config, AppServices::request()->getIPAddress());
         $driver->setLogger($logger);
 
         $session = new Session($driver, $config);
         $session->setLogger($logger);
 
         if (session_status() === PHP_SESSION_NONE) {
-            // PHP Session emits the headers according to `session.cache_limiter`.
-            // See https://www.php.net/manual/en/function.session-cache-limiter.php.
-            // The headers are not managed by CI's Response class.
-            // So, we remove CI's default Cache-Control header.
-            AppServices::response()->removeHeader('Cache-Control');
-
             $session->start();
         }
 
@@ -719,7 +711,7 @@ class Services extends BaseService
         }
 
         $config ??= config('App');
-        $superglobals ??= AppServices::get('superglobals');
+        $superglobals ??= AppServices::superglobals();
 
         return new SiteURIFactory($config, $superglobals);
     }
@@ -753,7 +745,7 @@ class Services extends BaseService
             return static::getSharedInstance('throttler');
         }
 
-        return new Throttler(AppServices::get('cache'));
+        return new Throttler(AppServices::cache());
     }
 
     /**
@@ -802,7 +794,7 @@ class Services extends BaseService
 
         if ($uri === null) {
             $appConfig = config(App::class);
-            $factory   = AppServices::siteurifactory($appConfig, AppServices::get('superglobals'));
+            $factory   = AppServices::siteurifactory($appConfig, AppServices::superglobals());
 
             return $factory->createFromGlobals();
         }
@@ -823,7 +815,7 @@ class Services extends BaseService
 
         $config ??= config(ValidationConfig::class);
 
-        return new Validation($config, AppServices::get('renderer'));
+        return new Validation($config, AppServices::renderer());
     }
 
     /**
@@ -838,7 +830,7 @@ class Services extends BaseService
             return static::getSharedInstance('viewcell');
         }
 
-        return new Cell(AppServices::get('cache'));
+        return new Cell(AppServices::cache());
     }
 
     /**
