@@ -43,26 +43,45 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="<?= base_url('serp') ?>"
-                                class="nav-link <?= isMenuActive('serp') ? 'active' : '' ?>">
+                                class="nav-link <?= isMenuActive('serp') && !isMenuActive('serp/instagram') ? 'active' : '' ?>">
                                 <?= nbs(3) ?>
                                 <i class="fas fa-search nav-icon"></i>
                                 <p>Google Analysis</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="<?= base_url('serp') ?>"
-                                class="nav-link <?= isMenuActive('serp') ? 'active' : '' ?>">
+                            <a href="<?= base_url('serp/instagram') ?>"
+                                class="nav-link <?= isMenuActive('serp/instagram') ? 'active' : '' ?>">
                                 <?= nbs(3) ?>
-                                <i class="fas fa-search nav-icon"></i>
-                                <p>Twitter Analysis</p>
+                                <i class="fab fa-instagram nav-icon"></i>
+                                <p>Instagram OSINT</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('serp/maps') ?>"
+                                class="nav-link <?= isMenuActive('serp/maps') ? 'active' : '' ?>">
+                                <?= nbs(3) ?>
+                                <i class="fas fa-map-marked-alt nav-icon"></i>
+                                <p>Maps Search</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item has-treeview <?= isMenuActive(['master', 'satuan']) ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= isMenuActive(['master', 'satuan']) ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-database"></i>
+                        <p>
+                            Modul Tracking
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="<?= base_url('serp') ?>"
                                 class="nav-link <?= isMenuActive('serp') ? 'active' : '' ?>">
                                 <?= nbs(3) ?>
                                 <i class="fas fa-search nav-icon"></i>
-                                <p>Instagram Analysis</p>
+                                <p>Google Analysis</p>
                             </a>
                         </li>
                     </ul>
