@@ -94,12 +94,19 @@ class Serp extends BaseController
                 'query' => $query,
                 'results' => $results['organic_results'] ?? [],
                 'osintAnalysis' => $osintAnalysis,
-                'deepSearch' => $deepSearch
+                'deepSearch' => $deepSearch,
+                'Pengaturan' => $this->pengaturan,
+                'user' => $this->ionAuth->user()->row(),
+                'isMenuActive' => isMenuActive('serp') ? 'active' : ''
             ];
 
             return view('admin-lte-3/serp/results', $data);
         } catch (\RuntimeException $e) {
-            return redirect()->back()->withInput()->with('error', 'Search failed: ' . $e->getMessage());
+            if (strpos($e->getMessage(), 'timed out') !== false) {
+                // Show a friendly message
+                return redirect()->back()->with('error', 'Search failed: The search service is currently unavailable. Please try again later.');
+            }
+            throw $e;
         }
     }
 } 

@@ -219,7 +219,7 @@ class OsintAnalyzer
         }
         
         // Check content quality
-        if (strlen($source['snippet']) > 100) {
+        if (!empty($source['snippet']) && strlen($source['snippet']) > 100) {
             $score += 30;
         }
         
@@ -240,22 +240,23 @@ class OsintAnalyzer
     protected function analyzeContentTrust(array $content): int
     {
         $score = 0;
-        
+        $snippet = $content['snippet'] ?? '';
+
         // Check for suspicious keywords
-        if (!$this->containsSuspiciousKeywords($content['title'] . ' ' . $content['snippet'])) {
+        if (!$this->containsSuspiciousKeywords(($content['title'] ?? '') . ' ' . $snippet)) {
             $score += 50;
         }
-        
+
         // Check content length
-        if (strlen($content['snippet']) > 150) {
+        if (strlen($snippet) > 150) {
             $score += 30;
         }
-        
+
         // Check for professional language
-        if ($this->isProfessionalLanguage($content['snippet'])) {
+        if ($this->isProfessionalLanguage($snippet)) {
             $score += 20;
         }
-        
+
         return $score;
     }
 

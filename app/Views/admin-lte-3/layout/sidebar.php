@@ -46,7 +46,23 @@
                                 class="nav-link <?= isMenuActive('serp') ? 'active' : '' ?>">
                                 <?= nbs(3) ?>
                                 <i class="fas fa-search nav-icon"></i>
-                                <p>Google Search Analysis</p>
+                                <p>Google Analysis</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('serp') ?>"
+                                class="nav-link <?= isMenuActive('serp') ? 'active' : '' ?>">
+                                <?= nbs(3) ?>
+                                <i class="fas fa-search nav-icon"></i>
+                                <p>Twitter Analysis</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('serp') ?>"
+                                class="nav-link <?= isMenuActive('serp') ? 'active' : '' ?>">
+                                <?= nbs(3) ?>
+                                <i class="fas fa-search nav-icon"></i>
+                                <p>Instagram Analysis</p>
                             </a>
                         </li>
                     </ul>

@@ -20,17 +20,19 @@ $routes->group('auth', function ($routes) {
 $routes->get('/dashboard', 'Dashboard::index', ['namespace' => 'App\Controllers', 'filter' => 'auth']);
 
 // Protected routes (require authentication)
-$routes->group('', ['filter' => 'auth'], function($routes) {
+$routes->group('', ['filter' => 'auth'], function ($routes) {
     // ChatGPT routes
     $routes->post('chatgpt/send', 'ChatGPT::send', ['filter' => 'cors']);
-    
-    // SERP routes
-    $routes->group('serp', function($routes) {
-        $routes->get('/', 'Serp::index');
-        $routes->match(['get', 'post'], 'search', 'Serp::search');
-        $routes->get('searchGoogle', 'Serp::searchGoogle');
-        $routes->get('searchYoutube', 'Serp::searchYoutube');
-        $routes->get('searchAmazon', 'Serp::searchAmazon');
-        $routes->get('customSearch', 'Serp::customSearch');
-    });
+
+});
+
+
+// SERP routes
+$routes->group('serp', function ($routes) {
+    $routes->get('/', 'Serp::index');
+    $routes->match(['get', 'post'], 'search', 'Serp::search');
+    $routes->get('searchGoogle', 'Serp::searchGoogle');
+    $routes->get('searchYoutube', 'Serp::searchYoutube');
+    $routes->get('searchAmazon', 'Serp::searchAmazon');
+    $routes->get('customSearch', 'Serp::customSearch');
 });
