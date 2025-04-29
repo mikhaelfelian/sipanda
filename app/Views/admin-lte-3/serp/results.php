@@ -125,6 +125,10 @@
                                         }
                                         ?>
                                     </p>
+                                    <button class="btn btn-info btn-analyze" data-title="<?= esc($result['title']) ?>" data-snippet="<?= esc(is_array($result['snippet']) ? json_encode($result['snippet']) : $result['snippet']) ?>">
+                                        Analyze
+                                    </button>
+                                    <div class="analyze-result mt-2"></div>
                                 </div>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -136,4 +140,31 @@
         </div>
     </div>
 </section>
+<script>
+$(document).on('click', '.btn-analyze', function() {
+    var title = $(this).data('title');
+    var snippet = $(this).data('snippet');
+    var text = title + ' ' + snippet;
+    var resultDiv = $(this).next('.analyze-result');
+    resultDiv.html('Analyzing...');
+    
+    $.ajax({
+        url: '<?= site_url('serp/analyzeNews') ?>',
+        type: 'POST',
+        data: {
+            text: text,
+            <?= csrf_token() ?>: '<?= csrf_hash() ?>'
+        },
+        success: function(data) {
+            resultDiv.html(
+                '<span class="badge badge-info">Sentiment: ' + data.sentiment + '</span> ' +
+                '<span class="badge badge-warning">Viral Prediction: ' + data.viral + '</span>'
+            );
+        },
+        error: function(xhr) {
+            resultDiv.html('<span class="badge badge-danger">Error: ' + xhr.status + ' ' + xhr.statusText + '</span>');
+        }
+    });
+});
+</script>
 <?= $this->endSection() ?>

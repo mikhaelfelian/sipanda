@@ -35,4 +35,5 @@ $routes->group('serp', function ($routes) {
     $routes->get('searchYoutube', 'Serp::searchYoutube');
     $routes->get('searchAmazon', 'Serp::searchAmazon');
     $routes->get('customSearch', 'Serp::customSearch');
+    $routes->post('analyzeNews', 'Serp::analyzeNews');
 });

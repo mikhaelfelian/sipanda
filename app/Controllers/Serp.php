@@ -109,4 +109,16 @@ class Serp extends BaseController
             throw $e;
         }
     }
+
+    public function analyzeNews()
+    {
+        $text = $this->request->getPost('text');
+        $analyzer = new \App\Libraries\NaiveBayesAnalyzer();
+        $sentiment = $analyzer->analyzeSentiment($text);
+        $viral = $analyzer->predictViral($text);
+        return $this->response->setJSON([
+            'sentiment' => $sentiment,
+            'viral' => $viral ? 'Likely Viral' : 'Not Likely Viral'
+        ]);
+    }
 } 
