@@ -108,7 +108,7 @@ class RedisHandler extends BaseHandler
     public function get(string $key)
     {
         $key  = static::validateKey($key, $this->prefix);
-        $data = $this->redis->hMget($key, ['__ci_type', '__ci_value']);
+        $data = $this->redis->hMGet($key, ['__ci_type', '__ci_value']);
 
         if (! isset($data['__ci_type'], $data['__ci_value']) || $data['__ci_value'] === false) {
             return null;
@@ -147,7 +147,7 @@ class RedisHandler extends BaseHandler
                 return false;
         }
 
-        if (! $this->redis->hMset($key, ['__ci_type' => $dataType, '__ci_value' => $value])) {
+        if (! $this->redis->hMSet($key, ['__ci_type' => $dataType, '__ci_value' => $value])) {
             return false;
         }
 
@@ -175,17 +175,18 @@ class RedisHandler extends BaseHandler
      */
     public function deleteMatching(string $pattern)
     {
-        /** @var list<string> $matchedKeys */
         $matchedKeys = [];
-        $pattern     = static::validateKey($pattern, $this->prefix);
         $iterator    = null;
 
         do {
-            /** @var false|list<string>|Redis $keys */
+            // Scan for some keys
             $keys = $this->redis->scan($iterator, $pattern);
 
-            if (is_array($keys)) {
-                $matchedKeys = [...$matchedKeys, ...$keys];
+            // Redis may return empty results, so protect against that
+            if ($keys !== false) {
+                foreach ($keys as $key) {
+                    $matchedKeys[] = $key;
+                }
             }
         } while ($iterator > 0);
 

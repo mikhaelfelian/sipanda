@@ -25,7 +25,7 @@ class QuotaTestCase extends \BC_PHPUnit_Framework_TestCase
     /**
      * set up test environment
      */
-    public function setUp(): void
+    public function setUp()
     {
         $this->quota = new Quota(10);
     }

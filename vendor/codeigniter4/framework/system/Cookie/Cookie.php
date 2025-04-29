@@ -283,7 +283,7 @@ class Cookie implements ArrayAccess, CloneableCookieInterface
             $name .= $this->getName();
         } else {
             $search  = str_split(self::$reservedCharsList);
-            $replace = array_map(rawurlencode(...), $search);
+            $replace = array_map('rawurlencode', $search);
 
             $name .= str_replace($search, $replace, $this->getName());
         }
@@ -482,7 +482,7 @@ class Cookie implements ArrayAccess, CloneableCookieInterface
      */
     public function withPath(?string $path)
     {
-        $path = $path !== null && $path !== '' && $path !== '0' ? $path : self::$defaults['path'];
+        $path = $path ?: self::$defaults['path'];
         $this->validatePrefix($this->prefix, $this->secure, $path, $this->domain);
 
         $cookie = clone $this;

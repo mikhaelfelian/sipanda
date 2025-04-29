@@ -37,7 +37,7 @@ class vfsStreamWrapperFileTimesTestCase extends \BC_PHPUnit_Framework_TestCase
     /**
      * set up test environment
      */
-    public function setUp(): void
+    public function setUp()
     {
         vfsStream::setup()
                  ->lastModified(50)

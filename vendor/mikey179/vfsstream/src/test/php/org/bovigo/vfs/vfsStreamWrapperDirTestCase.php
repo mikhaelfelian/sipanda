@@ -8,8 +8,6 @@
  * @package  org\bovigo\vfs
  */
 namespace org\bovigo\vfs;
-use PHPUnit\Framework\Error;
-
 require_once __DIR__ . '/vfsStreamWrapperBaseTestCase.php';
 /**
  * Test for org\bovigo\vfs\vfsStreamWrapper around mkdir().
@@ -216,12 +214,11 @@ class vfsStreamWrapperMkDirTestCase extends vfsStreamWrapperBaseTestCase
     /**
      * @test
      * @group  issue_28
+     * @expectedException PHPUnit_Framework_Error
+     * @expectedExceptionMessage  mkdir(): Path vfs://root/dir exists
      */
     public function mkDirShouldNotOverwriteExistingDirectoriesAndTriggerE_USER_WARNING()
     {
-        $this->expectException(Error\Warning::class);
-        $this->expectExceptionMessage('mkdir(): Path vfs://root/dir exists');
-
         vfsStream::setup('root');
         $dir = vfsStream::url('root/dir');
         $this->assertTrue(mkdir($dir));
@@ -242,11 +239,11 @@ class vfsStreamWrapperMkDirTestCase extends vfsStreamWrapperBaseTestCase
     /**
      * @test
      * @group  issue_28
+     * @expectedException PHPUnit_Framework_Error
+     * @expectedExceptionMessage  mkdir(): Path vfs://root/test.txt exists
      */
     public function mkDirShouldNotOverwriteExistingFilesAndTriggerE_USER_WARNING()
     {
-        $this->expectException(Error\Warning::class);
-        $this->expectExceptionMessage('mkdir(): Path vfs://root/test.txt exists');
         $root = vfsStream::setup('root');
         vfsStream::newFile('test.txt')->at($root);
         $this->assertFalse(mkdir(vfsStream::url('root/test.txt')));

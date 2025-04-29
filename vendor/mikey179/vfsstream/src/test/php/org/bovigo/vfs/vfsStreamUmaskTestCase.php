@@ -20,7 +20,7 @@ class vfsStreamUmaskTestCase extends \BC_PHPUnit_Framework_TestCase
     /**
      * set up test environment
      */
-    public function setUp(): void
+    public function setUp()
     {
         vfsStream::umask(0000);
     }
@@ -28,7 +28,7 @@ class vfsStreamUmaskTestCase extends \BC_PHPUnit_Framework_TestCase
     /**
      * clean up test environment
      */
-    public function tearDown(): void
+    public function tearDown()
     {
         vfsStream::umask(0000);
     }

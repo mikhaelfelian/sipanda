@@ -51,7 +51,6 @@ use CodeIgniter\Router\RouteCollection;
 use CodeIgniter\Router\RouteCollectionInterface;
 use CodeIgniter\Router\Router;
 use CodeIgniter\Security\Security;
-use CodeIgniter\Session\Handlers\BaseHandler as SessionBaseHandler;
 use CodeIgniter\Session\Handlers\Database\MySQLiHandler;
 use CodeIgniter\Session\Handlers\Database\PostgreHandler;
 use CodeIgniter\Session\Handlers\DatabaseHandler;
@@ -89,7 +88,6 @@ use Config\Session as SessionConfig;
 use Config\Toolbar as ToolbarConfig;
 use Config\Validation as ValidationConfig;
 use Config\View as ViewConfig;
-use InvalidArgumentException;
 use Locale;
 
 /**
@@ -202,7 +200,7 @@ class Services extends BaseService
      */
     public static function curlrequest(array $options = [], ?ResponseInterface $response = null, ?App $config = null, bool $getShared = true)
     {
-        if ($getShared) {
+        if ($getShared === true) {
             return static::getSharedInstance('curlrequest', $options, $response, $config);
         }
 
@@ -211,7 +209,7 @@ class Services extends BaseService
 
         return new CURLRequest(
             $config,
-            new URI($options['baseURI'] ?? null),
+            new URI($options['base_uri'] ?? null),
             $response,
             $options
         );
@@ -230,7 +228,7 @@ class Services extends BaseService
             return static::getSharedInstance('email', $config);
         }
 
-        if (empty($config) || (! is_array($config) && ! $config instanceof EmailConfig)) {
+        if (empty($config) || ! (is_array($config) || $config instanceof EmailConfig)) {
             $config = config(EmailConfig::class);
         }
 
@@ -345,7 +343,7 @@ class Services extends BaseService
         $config ??= config(Images::class);
         assert($config instanceof Images);
 
-        $handler = $handler !== null && $handler !== '' && $handler !== '0' ? $handler : $config->defaultHandler;
+        $handler = $handler ?: $config->defaultHandler;
         $class   = $config->handlers[$handler];
 
         return new $class($config);
@@ -385,7 +383,7 @@ class Services extends BaseService
         }
 
         // Use '?:' for empty string check
-        $locale = $locale !== null && $locale !== '' && $locale !== '0' ? $locale : $requestLocale;
+        $locale = $locale ?: $requestLocale;
 
         return new Language($locale);
     }
@@ -484,7 +482,7 @@ class Services extends BaseService
             return static::getSharedInstance('parser', $viewPath, $config);
         }
 
-        $viewPath = $viewPath !== null && $viewPath !== '' && $viewPath !== '0' ? $viewPath : (new Paths())->viewDirectory;
+        $viewPath = $viewPath ?: (new Paths())->viewDirectory;
         $config ??= config(ViewConfig::class);
 
         return new Parser($config, $viewPath, AppServices::get('locator'), CI_DEBUG, AppServices::get('logger'));
@@ -503,7 +501,7 @@ class Services extends BaseService
             return static::getSharedInstance('renderer', $viewPath, $config);
         }
 
-        $viewPath = $viewPath !== null && $viewPath !== '' && $viewPath !== '0' ? $viewPath : (new Paths())->viewDirectory;
+        $viewPath = $viewPath ?: (new Paths())->viewDirectory;
         $config ??= config(ViewConfig::class);
 
         return new View($config, $viewPath, AppServices::get('locator'), CI_DEBUG, AppServices::get('logger'));
@@ -676,24 +674,17 @@ class Services extends BaseService
 
         if ($driverName === DatabaseHandler::class) {
             $DBGroup = $config->DBGroup ?? config(Database::class)->defaultGroup;
+            $db      = Database::connect($DBGroup);
 
-            $driverPlatform = Database::connect($DBGroup)->getPlatform();
+            $driver = $db->getPlatform();
 
-            if ($driverPlatform === 'MySQLi') {
+            if ($driver === 'MySQLi') {
                 $driverName = MySQLiHandler::class;
-            } elseif ($driverPlatform === 'Postgre') {
+            } elseif ($driver === 'Postgre') {
                 $driverName = PostgreHandler::class;
             }
         }
 
-        if (! class_exists($driverName) || ! is_a($driverName, SessionBaseHandler::class, true)) {
-            throw new InvalidArgumentException(sprintf(
-                'Invalid session handler "%s" provided.',
-                $driverName
-            ));
-        }
-
-        /** @var SessionBaseHandler $driver */
         $driver = new $driverName($config, AppServices::get('request')->getIPAddress());
         $driver->setLogger($logger);
 
@@ -705,7 +696,7 @@ class Services extends BaseService
             // See https://www.php.net/manual/en/function.session-cache-limiter.php.
             // The headers are not managed by CI's Response class.
             // So, we remove CI's default Cache-Control header.
-            AppServices::get('response')->removeHeader('Cache-Control');
+            AppServices::response()->removeHeader('Cache-Control');
 
             $session->start();
         }

@@ -65,7 +65,7 @@ abstract class vfsStreamWrapperBaseTestCase extends \BC_PHPUnit_Framework_TestCa
     /**
      * set up test environment
      */
-    public function setUp(): void
+    public function setUp()
     {
         $this->fooURL  = vfsStream::url('foo');
         $this->barURL  = vfsStream::url('foo/bar');

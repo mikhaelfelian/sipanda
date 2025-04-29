@@ -22,7 +22,7 @@ class vfsStreamDirectoryIssue134TestCase extends \BC_PHPUnit_Framework_TestCase
     /**
      * set up test environment
      */
-    public function setUp(): void
+    public function setUp()
     {
         $this->rootDirectory = vfsStream::newDirectory('/');
         $this->rootDirectory->addChild(vfsStream::newDirectory('var/log/app'));

@@ -34,7 +34,7 @@ class StringHelper
     /**
      * Is iconv extension avalable?
      */
-    private static ?bool $isIconvEnabled;
+    private static ?bool $isIconvEnabled = null;
 
     /**
      * iconv options.
@@ -637,5 +637,10 @@ class StringHelper
         $v = (float) $textValue;
 
         return (is_numeric(substr($textValue, 0, strlen((string) $v)))) ? $v : $textValue;
+    }
+
+    public static function strlenAllowNull(?string $string): int
+    {
+        return strlen("$string");
     }
 }

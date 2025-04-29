@@ -26,7 +26,7 @@ class StringBasedFileContentTestCase extends \BC_PHPUnit_Framework_TestCase
     /**
      * set up test environment
      */
-    public function setUp(): void
+    public function setUp()
     {
         $this->stringBasedFileContent = new StringBasedFileContent('foobarbaz');
     }

@@ -19,6 +19,7 @@ use Composer\InstalledVersions;
 use Config\Autoload;
 use Config\Kint as KintConfig;
 use Config\Modules;
+use Config\Services;
 use InvalidArgumentException;
 use Kint;
 use Kint\Renderer\CliRenderer;
@@ -366,9 +367,6 @@ class Autoloader
         return $cleanFilename;
     }
 
-    /**
-     * @param array{only?: list<string>, exclude?: list<string>} $composerPackages
-     */
     private function loadComposerNamespaces(ClassLoader $composer, array $composerPackages): void
     {
         $namespacePaths = $composer->getPrefixesPsr4();
@@ -382,7 +380,7 @@ class Autoloader
             }
         }
 
-        if (! method_exists(InstalledVersions::class, 'getAllRawData')) { // @phpstan-ignore function.alreadyNarrowedType
+        if (! method_exists(InstalledVersions::class, 'getAllRawData')) {
             throw new RuntimeException(
                 'Your Composer version is too old.'
                 . ' Please update Composer (run `composer self-update`) to v2.0.14 or later'
@@ -509,7 +507,7 @@ class Autoloader
     {
         // If we have KINT_DIR it means it's already loaded via composer
         if (! defined('KINT_DIR')) {
-            spl_autoload_register(function ($class): void {
+            spl_autoload_register(function ($class) {
                 $class = explode('\\', $class);
 
                 if (array_shift($class) !== 'Kint') {
@@ -539,7 +537,7 @@ class Autoloader
             Kint::$plugins = $config->plugins;
         }
 
-        $csp = service('csp');
+        $csp = Services::csp();
         if ($csp->enabled()) {
             RichRenderer::$js_nonce  = $csp->getScriptNonce();
             RichRenderer::$css_nonce = $csp->getStyleNonce();

@@ -71,8 +71,6 @@ class ListCommands extends BaseCommand
 
     /**
      * Displays the help for the spark cli script itself.
-     *
-     * @return int
      */
     public function run(array $params)
     {
@@ -80,15 +78,13 @@ class ListCommands extends BaseCommand
         ksort($commands);
 
         // Check for 'simple' format
-        return array_key_exists('simple', $params) || CLI::getOption('simple') === true
+        return array_key_exists('simple', $params) || CLI::getOption('simple')
             ? $this->listSimple($commands)
             : $this->listFull($commands);
     }
 
     /**
      * Lists the commands with accompanying info.
-     *
-     * @return int
      */
     protected function listFull(array $commands)
     {
@@ -103,7 +99,7 @@ class ListCommands extends BaseCommand
             $groups[$command['group']][$title] = $command;
         }
 
-        $length = max(array_map(strlen(...), array_keys($commands)));
+        $length = max(array_map('strlen', array_keys($commands)));
 
         ksort($groups);
 
@@ -126,21 +122,15 @@ class ListCommands extends BaseCommand
                 CLI::newLine();
             }
         }
-
-        return EXIT_SUCCESS;
     }
 
     /**
      * Lists the commands only.
-     *
-     * @return int
      */
     protected function listSimple(array $commands)
     {
         foreach (array_keys($commands) as $title) {
             CLI::write($title);
         }
-
-        return EXIT_SUCCESS;
     }
 }

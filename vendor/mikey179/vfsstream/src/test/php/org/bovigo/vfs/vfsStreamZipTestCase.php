@@ -18,7 +18,7 @@ class vfsStreamZipTestCase extends \BC_PHPUnit_Framework_TestCase
     /**
      * set up test environment
      */
-    public function setUp(): void
+    public function setUp()
     {
         if (extension_loaded('zip') === false) {
             $this->markTestSkipped('No ext/zip installed, skipping test.');

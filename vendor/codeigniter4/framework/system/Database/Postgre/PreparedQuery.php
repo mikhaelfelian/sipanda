@@ -87,12 +87,6 @@ class PreparedQuery extends BasePreparedQuery
             throw new BadMethodCallException('You must call prepare before trying to execute a prepared statement.');
         }
 
-        foreach ($data as &$item) {
-            if (is_string($item) && $this->isBinary($item)) {
-                $item = pg_escape_bytea($this->db->connID, $item);
-            }
-        }
-
         $this->result = pg_execute($this->db->connID, $this->name, $data);
 
         return (bool) $this->result;
@@ -101,7 +95,8 @@ class PreparedQuery extends BasePreparedQuery
     /**
      * Returns the result object for the prepared query or false on failure.
      *
-     * @return PgSqlResult|null
+     * @return         resource|null
+     * @phpstan-return PgSqlResult|null
      */
     public function _getResult()
     {
@@ -125,7 +120,7 @@ class PreparedQuery extends BasePreparedQuery
         // Track our current value
         $count = 0;
 
-        return preg_replace_callback('/\?/', static function () use (&$count): string {
+        return preg_replace_callback('/\?/', static function () use (&$count) {
             $count++;
 
             return "\${$count}";

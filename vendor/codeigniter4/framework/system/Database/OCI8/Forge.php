@@ -135,7 +135,7 @@ class Forge extends BaseForge
                 $wantToAddNull   = ! str_contains($processedFields[$i]['null'], ' NOT');
                 $currentNullable = $nullableMap[$processedFields[$i]['name']];
 
-                if ($wantToAddNull && $currentNullable === true) {
+                if ($wantToAddNull === true && $currentNullable === true) {
                     $processedFields[$i]['null'] = '';
                 } elseif ($processedFields[$i]['null'] === '' && $currentNullable === false) {
                     // Nullable by default
@@ -202,7 +202,7 @@ class Forge extends BaseForge
             $constraint = ' CHECK(' . $this->db->escapeIdentifiers($processedField['name'])
                 . ' IN ' . $processedField['length'] . ')';
 
-            $processedField['length'] = '(' . max(array_map(mb_strlen(...), explode("','", mb_substr($processedField['length'], 2, -2)))) . ')' . $constraint;
+            $processedField['length'] = '(' . max(array_map('mb_strlen', explode("','", mb_substr($processedField['length'], 2, -2)))) . ')' . $constraint;
         } elseif (isset($this->primaryKeys['fields']) && count($this->primaryKeys['fields']) === 1 && $processedField['name'] === $this->primaryKeys['fields'][0]) {
             $processedField['unique'] = '';
         }
@@ -293,7 +293,7 @@ class Forge extends BaseForge
     {
         $sql = parent::_dropTable($table, $ifExists, $cascade);
 
-        if ($sql !== true && $cascade) {
+        if ($sql !== true && $cascade === true) {
             $sql .= ' CASCADE CONSTRAINTS PURGE';
         } elseif ($sql !== true) {
             $sql .= ' PURGE';

@@ -35,7 +35,7 @@ class vfsStreamContainerIteratorTestCase extends \BC_PHPUnit_Framework_TestCase
     /**
      * set up test environment
      */
-    public function setUp(): void
+    public function setUp()
     {
         $this->dir = new vfsStreamDirectory('foo');
         $this->mockChild1 = $this->bc_getMock('org\\bovigo\\vfs\\vfsStreamContent');
@@ -53,7 +53,7 @@ class vfsStreamContainerIteratorTestCase extends \BC_PHPUnit_Framework_TestCase
     /**
      * clean up test environment
      */
-    public function tearDown(): void
+    public function tearDown()
     {
         vfsStream::enableDotfiles();
     }

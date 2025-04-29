@@ -26,7 +26,7 @@ class vfsStreamWrapperDirSeparatorTestCase extends \BC_PHPUnit_Framework_TestCas
     /**
      * set up test environment
      */
-    public function setUp(): void
+    public function setUp()
     {
         $this->root = vfsStream::setup();
     }

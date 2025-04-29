@@ -522,7 +522,7 @@ class Filters
             [$name, $arguments] = explode(':', $name);
 
             $arguments = explode(',', $arguments);
-            array_walk($arguments, static function (&$item): void {
+            array_walk($arguments, static function (&$item) {
                 $item = trim($item);
             });
         }
@@ -557,7 +557,7 @@ class Filters
      */
     public function getArguments(?string $key = null)
     {
-        return ((string) $key === '') ? $this->arguments : $this->arguments[$key];
+        return $key === null ? $this->arguments : $this->arguments[$key];
     }
 
     // --------------------------------------------------------------------
@@ -674,7 +674,7 @@ class Filters
      */
     protected function processFilters(?string $uri = null)
     {
-        if (! isset($this->config->filters) || $this->config->filters === []) {
+        if (! isset($this->config->filters) || ! $this->config->filters) {
             return;
         }
 

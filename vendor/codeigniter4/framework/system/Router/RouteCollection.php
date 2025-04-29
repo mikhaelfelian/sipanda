@@ -21,6 +21,7 @@ use CodeIgniter\Router\Exceptions\RouterException;
 use Config\App;
 use Config\Modules;
 use Config\Routing;
+use Config\Services;
 use InvalidArgumentException;
 
 /**
@@ -282,7 +283,7 @@ class RouteCollection implements RouteCollectionInterface
         $this->fileLocator  = $locator;
         $this->moduleConfig = $moduleConfig;
 
-        $this->httpHost = service('request')->getServer('HTTP_HOST');
+        $this->httpHost = Services::request()->getServer('HTTP_HOST');
 
         // Setup based on config file. Let routes file override.
         $this->defaultNamespace   = rtrim($routing->defaultNamespace, '\\') . '\\';
@@ -560,7 +561,7 @@ class RouteCollection implements RouteCollectionInterface
      */
     public function getRoutes(?string $verb = null, bool $includeWildcard = true): array
     {
-        if ((string) $verb === '') {
+        if ($verb === null || $verb === '') {
             $verb = $this->getHTTPVerb();
         }
 
@@ -609,7 +610,7 @@ class RouteCollection implements RouteCollectionInterface
     {
         $options = $this->loadRoutesOptions($verb);
 
-        return ((string) $from !== '') ? $options[$from] ?? [] : $options;
+        return $from ? $options[$from] ?? [] : $options;
     }
 
     /**
@@ -779,7 +780,7 @@ class RouteCollection implements RouteCollectionInterface
 
         $callback = array_pop($params);
 
-        if ($params !== [] && is_array($params[0])) {
+        if ($params && is_array($params[0])) {
             $options = array_shift($params);
 
             if (isset($options['filter'])) {
@@ -852,7 +853,7 @@ class RouteCollection implements RouteCollectionInterface
         // In order to allow customization of the route the
         // resources are sent to, we need to have a new name
         // to store the values in.
-        $newName = implode('\\', array_map(ucfirst(...), explode('/', $name)));
+        $newName = implode('\\', array_map('ucfirst', explode('/', $name)));
 
         // If a new controller is specified, then we replace the
         // $name value with the name of the new controller.
@@ -946,7 +947,7 @@ class RouteCollection implements RouteCollectionInterface
         // In order to allow customization of the route the
         // resources are sent to, we need to have a new name
         // to store the values in.
-        $newName = implode('\\', array_map(ucfirst(...), explode('/', $name)));
+        $newName = implode('\\', array_map('ucfirst', explode('/', $name)));
 
         // If a new controller is specified, then we replace the
         // $name value with the name of the new controller.
@@ -1158,8 +1159,6 @@ class RouteCollection implements RouteCollectionInterface
 
     /**
      * Limits the routes to a specified ENVIRONMENT or they won't run.
-     *
-     * @param Closure(RouteCollection): void $callback
      */
     public function environment(string $env, Closure $callback): RouteCollectionInterface
     {
@@ -1329,7 +1328,7 @@ class RouteCollection implements RouteCollectionInterface
         $patterns = $matches[0];
 
         foreach ($patterns as $index => $pattern) {
-            if (preg_match('#^' . $pattern . '$#u', $params[$index]) !== 1) {
+            if (! preg_match('#^' . $pattern . '$#u', $params[$index])) {
                 throw RouterException::forInvalidParameterType();
             }
 
@@ -1391,7 +1390,7 @@ class RouteCollection implements RouteCollectionInterface
             // or maybe $placeholder is not a placeholder, but a regex.
             $pattern = $this->placeholders[$placeholderName] ?? $placeholder;
 
-            if (preg_match('#^' . $pattern . '$#u', (string) $params[$index]) !== 1) {
+            if (! preg_match('#^' . $pattern . '$#u', (string) $params[$index])) {
                 throw RouterException::forInvalidParameterType();
             }
 
@@ -1416,14 +1415,14 @@ class RouteCollection implements RouteCollectionInterface
         }
 
         // Check invalid locale
-        if ((string) $locale !== '') {
+        if ($locale !== null) {
             $config = config(App::class);
             if (! in_array($locale, $config->supportedLocales, true)) {
                 $locale = null;
             }
         }
 
-        if ((string) $locale === '') {
+        if ($locale === null) {
             $locale = service('request')->getLocale();
         }
 
@@ -1455,12 +1454,6 @@ class RouteCollection implements RouteCollectionInterface
         // When redirecting to named route, $to is an array like `['zombies' => '\Zombies::index']`.
         if (is_array($to) && isset($to[0])) {
             $to = $this->processArrayCallableSyntax($from, $to);
-        }
-
-        // Merge group filters.
-        if (isset($options['filter'])) {
-            $currentFilter     = (array) ($this->currentOptions['filter'] ?? []);
-            $options['filter'] = array_merge($currentFilter, (array) $options['filter']);
         }
 
         $options = array_merge($this->currentOptions ?? [], $options ?? []);
@@ -1504,7 +1497,7 @@ class RouteCollection implements RouteCollectionInterface
             for ($i = (int) $options['offset'] + 1; $i < (int) $options['offset'] + 7; $i++) {
                 $to = preg_replace_callback(
                     '/\$X/',
-                    static fn ($m): string => '$' . $i,
+                    static fn ($m) => '$' . $i,
                     $to,
                     1
                 );
@@ -1605,7 +1598,7 @@ class RouteCollection implements RouteCollectionInterface
     private function getMethodParams(string $from): string
     {
         preg_match_all('/\(.+?\)/', $from, $matches);
-        $count = count($matches[0]);
+        $count = is_countable($matches[0]) ? count($matches[0]) : 0;
 
         $params = '';
 
