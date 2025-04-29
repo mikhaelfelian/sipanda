@@ -91,6 +91,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'mashape/unirest-php' => array(
+            'pretty_version' => 'v3.0.4',
+            'version' => '3.0.4.0',
+            'reference' => '842c0f242dfaaf85f16b72e217bf7f7c19ab12cb',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../mashape/unirest-php',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'mikey179/vfsstream' => array(
             'pretty_version' => 'v1.6.12',
             'version' => '1.6.12.0',
@@ -135,6 +144,15 @@
             'install_path' => __DIR__ . '/../phar-io/version',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'phpfastcache/phpfastcache' => array(
+            'pretty_version' => '9.2.3',
+            'version' => '9.2.3.0',
+            'reference' => '372d62e0bbab5bcfac6404dc912040b038a3afb7',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../phpfastcache/phpfastcache',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'phpoffice/phpspreadsheet' => array(
             'pretty_version' => '3.7.0',
@@ -199,6 +217,21 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'psr/cache' => array(
+            'pretty_version' => '3.0.0',
+            'version' => '3.0.0.0',
+            'reference' => 'aa5030cfa5405eccfdcb1083ce040c2cb8d253bf',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../psr/cache',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'psr/cache-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '2.0|3.0',
+            ),
+        ),
         'psr/container' => array(
             'pretty_version' => '2.0.2',
             'version' => '2.0.2.0',
@@ -250,6 +283,21 @@
             'reference' => '764e0b3939f5ca87cb904f570ef9be2d78a07865',
             'type' => 'library',
             'install_path' => __DIR__ . '/../psr/simple-cache',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'psr/simple-cache-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '2.0|3.0',
+            ),
+        ),
+        'raiym/instagram-php-scraper' => array(
+            'pretty_version' => 'v0.5.0',
+            'version' => '0.5.0.0',
+            'reference' => 'cb3b3e14dcb02738a5f4e7fcf178fad1b160db88',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../raiym/instagram-php-scraper',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
