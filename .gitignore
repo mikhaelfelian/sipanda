@@ -108,6 +108,7 @@ nb-configuration.xml
 public/file/pasien/*
 public/file/user/*
 app/Database/Migrations/*
+/jajal/*
 
 # Sublime Text
 *.tmlanguage.cache
