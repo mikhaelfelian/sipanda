@@ -1,2 +1,2 @@
 <?php phpinfo() ?>
-mencoba
+kontolmu gedi asu
