@@ -1,5 +1,5 @@
 RewriteEngine On
-RewriteBase /medkit3-v2
+RewriteBase /sipanda
 
 # Allow direct access to files
 RewriteCond %{REQUEST_FILENAME} -f [OR]
