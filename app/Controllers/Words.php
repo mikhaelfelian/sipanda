@@ -1,18 +1,49 @@
 <?php
+/**
+ * Words Controller
+ * 
+ * This controller manages the words dictionary for sentiment analysis
+ * 
+ * @author    Mikhael Felian Waskito <mikhaelfelian@gmail.com>
+ * @created   2025-04-30
+ */
 
 namespace App\Controllers;
 
 use App\Models\WordModel;
+use App\Libraries\PHPInsights;
 
 class Words extends BaseController
 {
+    /**
+     * Word model instance
+     * 
+     * @var WordModel
+     */
     protected $wordModel;
+    
+    /**
+     * PHPInsights library instance
+     * 
+     * @var PHPInsights
+     */
+    protected $insights;
 
+    /**
+     * Constructor initializes models and libraries
+     */
     public function __construct()
     {
+        parent::__construct();
         $this->wordModel = new WordModel();
+        $this->insights = new PHPInsights();
     }
 
+    /**
+     * Display the word management interface
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string
+     */
     public function index()
     {
         // Check if user is logged in
@@ -32,6 +63,11 @@ class Words extends BaseController
         return view($this->theme->getThemePath() . '/words/index', $data);
     }
 
+    /**
+     * Add a new word to the dictionary
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse
+     */
     public function add()
     {
         // Using GET parameters instead of POST
@@ -68,6 +104,12 @@ class Words extends BaseController
         }
     }
 
+    /**
+     * Edit an existing word in the dictionary
+     * 
+     * @param int|null $id Word ID
+     * @return \CodeIgniter\HTTP\RedirectResponse
+     */
     public function edit($id = null)
     {
         if ($id === null) {
@@ -103,6 +145,12 @@ class Words extends BaseController
         }
     }
 
+    /**
+     * Delete a word from the dictionary
+     * 
+     * @param int|null $id Word ID
+     * @return \CodeIgniter\HTTP\RedirectResponse
+     */
     public function delete($id = null)
     {
         if ($id === null) {
@@ -118,6 +166,11 @@ class Words extends BaseController
         }
     }
 
+    /**
+     * View positive words
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string
+     */
     public function viewPositive()
     {
         $language = $this->request->getGet('language') ?? 'en';
@@ -134,6 +187,11 @@ class Words extends BaseController
         return view($this->theme->getThemePath() . '/words/positive', $data);
     }
 
+    /**
+     * View negative words
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string
+     */
     public function viewNegative()
     {
         $language = $this->request->getGet('language') ?? 'en';
@@ -150,6 +208,11 @@ class Words extends BaseController
         return view($this->theme->getThemePath() . '/words/negative', $data);
     }
 
+    /**
+     * View words by category
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string
+     */
     public function viewByCategory()
     {
         $category = $this->request->getGet('category');
@@ -171,5 +234,35 @@ class Words extends BaseController
         ];
 
         return view($this->theme->getThemePath() . '/words/category', $data);
+    }
+    
+    /**
+     * Analyze text using PHPInsights library
+     * 
+     * @return \CodeIgniter\HTTP\RedirectResponse|string
+     */
+    public function analyze()
+    {
+        $text = $this->request->getGet('text');
+        $language = $this->request->getGet('language') ?? 'en';
+        
+        if (empty($text)) {
+            return redirect()->to('words')
+                ->with('error', 'Text parameter is required');
+        }
+        
+        $analysis = $this->insights->analyzeSentiment($text, $language);
+        
+        $data = [
+            'title'        => 'Sentiment Analysis',
+            'Pengaturan'   => $this->pengaturan,
+            'user'         => $this->ionAuth->user()->row(),
+            'isMenuActive' => isMenuActive('words/analyze') ? 'active' : '',
+            'text'         => $text,
+            'analysis'     => $analysis,
+            'language'     => $language
+        ];
+
+        return view($this->theme->getThemePath() . '/words/analyze', $data);
     }
 } 

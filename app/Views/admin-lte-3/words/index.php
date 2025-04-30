@@ -1,3 +1,13 @@
+<?php
+/**
+ * Word Management View
+ * 
+ * This view displays the word management interface for sentiment analysis
+ * 
+ * @author    Mikhael Felian Waskito <mikhaelfelian@gmail.com>
+ * @created   2025-04-30
+ */
+?>
 <?= $this->extend(theme_path('main')) ?>
 
 <?= $this->section('content') ?>

@@ -19,6 +19,11 @@
                                     <i class="fas fa-hashtag mr-1"></i> Cari Hashtag
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="hashtag-suggestions-tab" data-toggle="pill" href="#hashtag-suggestions" role="tab">
+                                    <i class="fas fa-lightbulb mr-1"></i> Saran Hashtags
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     <div class="card-body">
@@ -59,6 +64,33 @@
                                     </div>
                                     <button type="submit" class="btn btn-primary rounded-0">
                                         <i class="fas fa-search mr-1"></i> Cari Hashtag
+                                    </button>
+                                <?= form_close() ?>
+                            </div>
+                            
+                            <!-- Hashtag Suggestions Tab -->
+                            <div class="tab-pane fade" id="hashtag-suggestions" role="tabpanel">
+                                <?= form_open('serp/instagram/hashtag-suggestions', ['method' => 'post']) ?>
+                                    <div class="form-group">
+                                        <label for="topic-query">Topik atau Niche</label>
+                                        <input type="text" class="form-control rounded-0" id="topic-query" name="topic"
+                                            placeholder="Masukkan topik atau niche..." required minlength="3" maxlength="255">
+                                        <small class="form-text text-muted">Masukkan topik untuk mendapatkan saran hashtag populer yang relevan</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Kategori</label>
+                                        <select class="form-control rounded-0" name="category">
+                                            <option value="general">Umum</option>
+                                            <option value="business">Bisnis</option>
+                                            <option value="lifestyle">Gaya Hidup</option>
+                                            <option value="travel">Perjalanan</option>
+                                            <option value="food">Makanan</option>
+                                            <option value="fashion">Fashion</option>
+                                            <option value="photography">Fotografi</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary rounded-0">
+                                        <i class="fas fa-lightbulb mr-1"></i> Dapatkan Saran Hashtag
                                     </button>
                                 <?= form_close() ?>
                             </div>

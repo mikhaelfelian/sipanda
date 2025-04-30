@@ -32,9 +32,9 @@
                 </li>
 
                 <!-- Analyzed data -->
-                <li class="nav-item has-treeview <?= isMenuActive(['serp', 'google', 'instagram', 'maps']) ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= isMenuActive(['serp', 'google', 'instagram', 'maps']) ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-database"></i>
+                <li class="nav-item has-treeview <?= isMenuActive(['serp', 'google', 'instagram', 'maps', 'sentimentanalysis']) ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= isMenuActive(['serp', 'google', 'instagram', 'maps', 'sentimentanalysis']) ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-chart-line"></i>
                         <p>
                             Modul Analisis Data
                             <i class="right fas fa-angle-left"></i>
@@ -65,11 +65,19 @@
                                 <p>Lokasi Peta</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('serp/sentiment') ?>"
+                                class="nav-link <?= isMenuActive('serp/sentiment') ? 'active' : '' ?>">
+                                <?= nbs(3) ?>
+                                <i class="fas fa-comment-dots nav-icon"></i>
+                                <p>Analisis Sentimen</p>
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 <li class="nav-item has-treeview <?= isMenuActive(['master', 'satuan']) ? 'menu-open' : '' ?>">
                     <a href="#" class="nav-link <?= isMenuActive(['master', 'satuan']) ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-database"></i>
+                        <i class="nav-icon fas fa-map-marker-alt"></i>
                         <p>
                             Modul Tracking
                             <i class="right fas fa-angle-left"></i>
