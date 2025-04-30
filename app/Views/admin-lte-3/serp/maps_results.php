@@ -83,7 +83,7 @@
                                 }
                             </script>
                             <script async defer
-                                src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+                                src="https://maps.googleapis.com/maps/api/js?key=<?= config('GoogleMaps')->apiKey ?>&callback=initMap">
                             </script>
                         <?php else: ?>
                             <div class="text-center bg-light" style="height: 500px; display: flex; align-items: center; justify-content: center;">
