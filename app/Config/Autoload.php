@@ -101,6 +101,7 @@ class Autoload extends AutoloadConfig
         'general',
         'debug',
         'angka',
-        'tanggalan'
+        'tanggalan',
+        'pdf'
     ];
 }

@@ -55,6 +55,17 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'jwhennessey/phpinsight' => array(
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => 'f7c5e79e1f9f5c9f055a202a18939453f0dfce1d',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../jwhennessey/phpinsight',
+            'aliases' => array(
+                0 => '9999999-dev',
+            ),
+            'dev_requirement' => false,
+        ),
         'laminas/laminas-escaper' => array(
             'pretty_version' => '2.15.0',
             'version' => '2.15.0.0',
@@ -462,6 +473,15 @@
             'install_path' => __DIR__ . '/../symfony/deprecation-contracts',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'tecnickcom/tcpdf' => array(
+            'pretty_version' => '6.9.3',
+            'version' => '6.9.3.0',
+            'reference' => 'd0e8dd17f8a1df3c97b94b9af8356e88e811ed59',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../tecnickcom/tcpdf',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'theseer/tokenizer' => array(
             'pretty_version' => '1.2.3',

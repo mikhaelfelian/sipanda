@@ -8,5 +8,6 @@ $baseDir = dirname($vendorDir);
 return array(
     'org\\bovigo\\vfs\\' => array($vendorDir . '/mikey179/vfsstream/src/main/php'),
     'Unirest\\' => array($vendorDir . '/mashape/unirest-php/src'),
+    'PHPInsight' => array($vendorDir . '/jwhennessey/phpinsight/lib'),
     'InstagramScraper' => array($vendorDir . '/raiym/instagram-php-scraper/src'),
 );

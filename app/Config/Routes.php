@@ -31,11 +31,15 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 $routes->group('serp', function ($routes) {
     $routes->get('google', 'Serp::index');
     $routes->match(['get', 'post'], 'search', 'Serp::search');
+    $routes->get('result', 'Serp::result');
     $routes->get('searchGoogle', 'Serp::searchGoogle');
     $routes->get('searchYoutube', 'Serp::searchYoutube');
     $routes->get('searchAmazon', 'Serp::searchAmazon');
     $routes->get('customSearch', 'Serp::customSearch');
     $routes->post('analyzeNews', 'Serp::analyzeNews');
+    $routes->post('exportSearchResultPdf', 'Serp::exportSearchResultPdf');
+    $routes->post('exportAllResultsPdf', 'Serp::exportAllResultsPdf');
+    $routes->post('exportToText', 'Serp::exportToText');
     
     // Maps search routes
     $routes->get('maps', 'SerpMaps::index');
@@ -51,6 +55,7 @@ $routes->group('serp', function ($routes) {
     // Sentiment Analysis routes
     $routes->get('sentiment', 'SentimentAnalysis::index');
     $routes->post('sentiment/analyze', 'SentimentAnalysis::analyze');
+    $routes->post('sentiment/export-pdf', 'SentimentAnalysis::exportPdf');
 });
 
 // Words routes (using GET method)

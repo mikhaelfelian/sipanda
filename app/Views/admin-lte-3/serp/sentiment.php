@@ -19,7 +19,12 @@
                         <button type="button" class="btn btn-primary rounded-0" id="analyze-button">Analisis Sentimen</button>
 
                         <div class="mt-4" id="result-container" style="display: none;">
-                            <h4>Hasil Analisis</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4>Hasil Analisis</h4>
+                                <button type="button" class="btn btn-success rounded-0" id="export-pdf-button">
+                                    <i class="fas fa-file-pdf"></i> Export PDF
+                                </button>
+                            </div>
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="info-box rounded-0">
@@ -82,6 +87,9 @@
 
 <script>
     $(document).ready(function () {
+        // Store the analysis results
+        let analysisResults = null;
+        
         $('#analyze-button').click(function () {
             const text = $('#text-to-analyze').val().trim();
 
@@ -105,6 +113,10 @@
                 dataType: 'json',
                 success: function (response) {
                     if (response.success) {
+                        // Store results for PDF export
+                        analysisResults = response;
+                        analysisResults.text = text;
+                        
                         // Display the results
                         let sentimentText = response.sentiment.toUpperCase();
                         if (sentimentText === 'POSITIVE') sentimentText = 'POSITIF';
@@ -157,6 +169,70 @@
                 complete: function () {
                     // Reset button state
                     $('#analyze-button').html('Analisis Sentimen').attr('disabled', false);
+                }
+            });
+        });
+        
+        // PDF Export button handler
+        $('#export-pdf-button').click(function() {
+            if (!analysisResults) {
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Tidak ada hasil analisis untuk diekspor'
+                });
+                return;
+            }
+            
+            // Show loading state
+            $(this).html('<i class="fas fa-spinner fa-spin"></i> Generating PDF...').attr('disabled', true);
+            
+            // Prepare data for PDF export
+            const data = {
+                text: analysisResults.text,
+                sentiment: analysisResults.sentiment,
+                positiveScore: analysisResults.positiveScore,
+                negativeScore: analysisResults.negativeScore,
+                positiveWords: JSON.stringify(analysisResults.positiveWords),
+                negativeWords: JSON.stringify(analysisResults.negativeWords)
+            };
+            
+            // Send request to generate PDF
+            $.ajax({
+                url: '<?= base_url('serp/sentiment/export-pdf') ?>',
+                type: 'POST',
+                data: data,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Create a download link for the PDF
+                        const pdfData = 'data:application/pdf;base64,' + response.pdf;
+                        const link = document.createElement('a');
+                        link.href = pdfData;
+                        link.download = 'sentiment_analysis_report.pdf';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'PDF berhasil dibuat'
+                        });
+                    } else {
+                        Toast.fire({
+                            icon: 'error',
+                            title: response.message || 'Gagal membuat PDF'
+                        });
+                    }
+                },
+                error: function() {
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Gagal meng-export PDF. Silakan coba lagi.'
+                    });
+                },
+                complete: function() {
+                    // Reset button state
+                    $('#export-pdf-button').html('<i class="fas fa-file-pdf"></i> Export PDF').attr('disabled', false);
                 }
             });
         });

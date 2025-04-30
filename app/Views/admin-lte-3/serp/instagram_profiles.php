@@ -1,4 +1,4 @@
-<?= $this->extend('admin-lte-3/layouts/main') ?>
+<?= $this->extend(theme_path('main')) ?>
 
 <?= $this->section('content') ?>
 <section class="content">

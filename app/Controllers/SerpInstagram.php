@@ -16,17 +16,41 @@ class SerpInstagram extends BaseController
     protected $keywordModel;
     protected $cachePool;
     protected $instagram;
+    protected $apiKey;
 
     public function __construct()
     {
         parent::__construct();
         $this->keywordModel = new KeywordModel();
         
+        // Set Instagram Meta API key
+        $this->apiKey = 'ee851f252a1da460ad9760c91e024eb5';
+        
         // Set up caching for Instagram scraper
         $this->cachePool = new Psr16Adapter('Files');
         
-        // Initialize the Instagram wrapper with the cache
-        $this->instagram = new InstaWrapper($this->cachePool);
+        try {
+            // Initialize the Instagram wrapper with the cache
+            $this->instagram = new InstaWrapper($this->cachePool);
+            
+            // Set the API key for the wrapper
+            if (method_exists($this->instagram, 'setApiKey')) {
+                $this->instagram->setApiKey($this->apiKey);
+                log_message('info', 'Instagram API key set successfully');
+            } else {
+                log_message('warning', 'InstaWrapper does not have setApiKey method, API integration disabled');
+            }
+        } catch (\Exception $e) {
+            // Log the exception but continue with no Instagram
+            log_message('error', 'Failed to initialize Instagram wrapper: ' . $e->getMessage());
+            // Make sure we at least have an instance to prevent fatal errors
+            $this->instagram = new InstaWrapper($this->cachePool);
+        }
+        
+        // Pre-set the API key statically to ensure it's available even in static calls
+        if (method_exists('\\App\\Libraries\\InstaWrapper', 'setApiKeyStatic')) {
+            \App\Libraries\InstaWrapper::setApiKeyStatic($this->apiKey);
+        }
     }
 
     /**

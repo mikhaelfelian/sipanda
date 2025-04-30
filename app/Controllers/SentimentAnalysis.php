@@ -8,8 +8,8 @@ class SentimentAnalysis extends BaseController
 {
     public function index()
     {
-        // Memuat library dan model yang diperlukan
-        helper(['form', 'url', 'theme']);
+        // Load necessary libraries and models
+        helper(['form', 'url', 'theme', 'pdf']);
 
         $data = [
             'title' => 'Sentiment Analysis',
@@ -24,7 +24,7 @@ class SentimentAnalysis extends BaseController
 
     public function analyze()
     {
-        // Memeriksa apakah permintaan adalah AJAX
+        // Check if request is AJAX
         if (!$this->request->isAJAX()) {
             return $this->response->setJSON([
                 'success' => false,
@@ -32,7 +32,7 @@ class SentimentAnalysis extends BaseController
             ]);
         }
 
-        // Mendapatkan teks dari permintaan
+        // Get text from the request
         $text = $this->request->getPost('text');
 
         if (empty($text)) {
@@ -43,7 +43,7 @@ class SentimentAnalysis extends BaseController
         }
 
         try {
-            // Melakukan analisis sentimen
+            // Perform sentiment analysis
             $result = $this->analyzeSentiment($text);
 
             return $this->response->setJSON([
@@ -65,10 +65,71 @@ class SentimentAnalysis extends BaseController
     }
 
     /**
-     * Melakukan analisis sentimen pada teks yang diberikan
+     * Export sentiment analysis results to PDF
+     */
+    public function exportPdf()
+    {
+        // Load PDF helper
+        helper('pdf');
+        
+        // Check if request is AJAX
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Invalid request method'
+            ]);
+        }
+
+        // Get data from request
+        $text = $this->request->getPost('text');
+        $sentiment = $this->request->getPost('sentiment');
+        $positiveScore = $this->request->getPost('positiveScore');
+        $negativeScore = $this->request->getPost('negativeScore');
+        $positiveWords = json_decode($this->request->getPost('positiveWords'), true);
+        $negativeWords = json_decode($this->request->getPost('negativeWords'), true);
+        
+        if (empty($text)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Text is required'
+            ]);
+        }
+
+        try {
+            // Create sentiment analysis data array
+            $data = [
+                'text' => $text,
+                'sentiment' => $sentiment,
+                'positiveScore' => $positiveScore,
+                'negativeScore' => $negativeScore,
+                'positiveWords' => $positiveWords,
+                'negativeWords' => $negativeWords
+            ];
+            
+            // Generate PDF
+            $pdfString = sentiment_analysis_pdf($data);
+            
+            // Return base64 encoded PDF
+            return $this->response->setJSON([
+                'success' => true,
+                'pdf' => base64_encode($pdfString)
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'PDF generation error: ' . $e->getMessage());
+            
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error generating PDF: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Performs sentiment analysis on the given text
      * 
-     * @param string $text Teks yang akan dianalisis
-     * @return array Hasil analisis
+     * @param string $text The text to analyze
+     * @return array Analysis results
      */
     private function analyzeSentiment($text)
     {
@@ -135,10 +196,10 @@ class SentimentAnalysis extends BaseController
     }
     
     /**
-     * Data sentimen negatif dan positif
+     * Loads sentiment dictionary
      * 
-     * @param string $type bank kata ('positif' atau 'negatif')
-     * @return array kata positif atau negatif
+     * @param string $type Dictionary type ('positive' or 'negative')
+     * @return array Array of words
      */
     private function loadDictionary($type)
     {

@@ -27,6 +27,11 @@ class InstaWrapper extends Instagram
      * Cache for instance used in requests
      */
     private static $instanceCache = null;
+    
+    /**
+     * API key for Instagram Meta API
+     */
+    private static $apiKey = null;
 
     /**
      * Constructor initializes the cache
@@ -39,6 +44,30 @@ class InstaWrapper extends Instagram
         self::$staticCache = $cache;
         self::$instance = $this;
         self::$instanceCache = $cache;
+    }
+
+    /**
+     * Set the API key for Instagram Meta API
+     *
+     * @param string $apiKey The API key
+     * @return void
+     */
+    public function setApiKey($apiKey)
+    {
+        self::$apiKey = $apiKey;
+        log_message('info', 'Instagram Meta API key set via instance method');
+    }
+    
+    /**
+     * Static method to set the API key for Instagram Meta API
+     *
+     * @param string $apiKey The API key
+     * @return void
+     */
+    public static function setApiKeyStatic($apiKey)
+    {
+        self::$apiKey = $apiKey;
+        log_message('info', 'Instagram Meta API key set via static method');
     }
 
     /**
@@ -64,40 +93,102 @@ class InstaWrapper extends Instagram
     public static function searchAccountsByUsername($username, $count = 10)
     {
         try {
-            // Try using the parent method first
-            return parent::searchAccountsByUsername($username, $count);
-        } catch (\Error $e) {
-            // Handle stdClass conversion error
-            if (strpos($e->getMessage(), 'Object of class stdClass could not be converted to string') !== false) {
-                log_message('error', 'Instagram API Error (stdClass conversion) in searchAccountsByUsername: ' . $e->getMessage());
-                
-                // Try a custom implementation as a fallback
-                $instance = self::getInstance();
-                // Use the correct request method from the parent class
-                $endpoint = 'web/search/topsearch/?context=blended&query=' . $username . '&rank_token=0.1234567890&include_reel=true';
-                $response = parent::request($endpoint);
-                
-                if (!isset($response->status) || $response->status !== 'ok') {
-                    return [];
-                }
-                
-                $accounts = [];
-                $usersCount = 0;
-                
-                if (isset($response->users) && is_array($response->users)) {
-                    foreach ($response->users as $user) {
-                        if (isset($user->user) && $usersCount < $count) {
-                            $accounts[] = self::mapUserFromSearch($user->user);
-                            $usersCount++;
+            // If API key is available, try to use it for the search
+            if (self::$apiKey) {
+                try {
+                    // Use the API key for the search
+                    log_message('info', 'Using Instagram Meta API for username search: ' . $username);
+                    
+                    // Build the endpoint to use with API key
+                    $endpoint = 'web/search/topsearch/?context=blended&query=' . $username . '&rank_token=0.1234567890&include_reel=true';
+                    $response = self::requestWithApiKey($endpoint);
+                    
+                    // Process the response
+                    if (isset($response->users) && is_array($response->users)) {
+                        $accounts = [];
+                        $usersCount = 0;
+                        
+                        foreach ($response->users as $user) {
+                            if (isset($user->user) && $usersCount < $count) {
+                                $accounts[] = self::mapUserFromSearch($user->user);
+                                $usersCount++;
+                            }
                         }
+                        
+                        return $accounts;
+                    }
+                    
+                    // If no users found, fall back to the original method
+                    log_message('info', 'No users found using API key, falling back to scraping');
+                } catch (\Exception $apiException) {
+                    // Log the API exception but continue with scraping fallback
+                    log_message('error', 'Instagram Meta API error in searchAccountsByUsername: ' . $apiException->getMessage());
+                }
+            }
+            
+            // Try using the parent method as fallback
+            try {
+                return parent::searchAccountsByUsername($username, $count);
+            } catch (\Error $e) {
+                // Handle stdClass conversion error
+                if (strpos($e->getMessage(), 'Object of class stdClass could not be converted to string') !== false) {
+                    log_message('error', 'Instagram API Error (stdClass conversion) in searchAccountsByUsername: ' . $e->getMessage());
+                    
+                    // Try a custom implementation as a fallback
+                    $instance = self::getInstance();
+                    // Use the instance method we created
+                    $endpoint = 'web/search/topsearch/?context=blended&query=' . $username . '&rank_token=0.1234567890&include_reel=true';
+                    
+                    try {
+                        // Use our direct implementation of the request
+                        $ch = curl_init();
+                        $url = 'https://www.instagram.com/' . $endpoint;
+                        
+                        curl_setopt($ch, CURLOPT_URL, $url);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                            'Accept: application/json'
+                        ]);
+                        
+                        // Execute the request
+                        $response = curl_exec($ch);
+                        curl_close($ch);
+                        
+                        $response = json_decode($response);
+                        
+                        if (!isset($response->status) || $response->status !== 'ok') {
+                            return [];
+                        }
+                        
+                        $accounts = [];
+                        $usersCount = 0;
+                        
+                        if (isset($response->users) && is_array($response->users)) {
+                            foreach ($response->users as $user) {
+                                if (isset($user->user) && $usersCount < $count) {
+                                    $accounts[] = self::mapUserFromSearch($user->user);
+                                    $usersCount++;
+                                }
+                            }
+                        }
+                        
+                        return $accounts;
+                    } catch (\Exception $requestException) {
+                        log_message('error', 'Failed to search accounts: ' . $requestException->getMessage());
+                        // Return empty array as last resort
+                        return [];
                     }
                 }
                 
-                return $accounts;
+                // Re-throw if it's a different error
+                throw $e;
             }
-            
-            // Re-throw if it's a different error
-            throw $e;
+        } catch (\Exception $generalException) {
+            // Handle any other exceptions
+            log_message('error', 'General error in searchAccountsByUsername: ' . $generalException->getMessage());
+            return [];
         }
     }
     /**
@@ -275,6 +366,7 @@ class InstaWrapper extends Instagram
 
     /**
      * Override the parent request method to handle missing 'Set-Cookie' header
+     * and use API key if available
      * 
      * @param string $endpoint
      * @param bool $session
@@ -286,7 +378,96 @@ class InstaWrapper extends Instagram
     public static function request($endpoint, $session = false, $username = null, $password = null)
     {
         try {
-            return parent::request($endpoint, $session, $username, $password);
+            // If we have an API key, use the Meta API instead
+            if (self::$apiKey) {
+                log_message('info', 'Using Instagram Meta API for request: ' . $endpoint);
+                return self::requestWithApiKey($endpoint);
+            }
+            
+            // Try to use a safer approach than parent::request
+            // This avoids the Set-Cookie error by handling headers safely
+            try {
+                // Make the request directly to avoid parent class error
+                $ch = curl_init();
+                
+                $url = 'https://www.instagram.com/';
+                if (substr($endpoint, 0, 8) === 'https://') {
+                    $url = $endpoint;
+                } else if (substr($endpoint, 0, 3) === 'api') {
+                    // If it's an API endpoint (starting with 'api'), keep it as is
+                    $url = 'https://www.instagram.com/' . $endpoint;
+                } else if (substr($endpoint, 0, 1) === '/') {
+                    // If it starts with a slash, strip it
+                    $url = 'https://www.instagram.com' . $endpoint;
+                } else {
+                    // Otherwise add api/v1/ prefix for Instagram API endpoints
+                    $url = 'https://www.instagram.com/api/v1/' . $endpoint;
+                }
+                
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_HEADER, true); // Get headers in response
+                
+                // Set user agent
+                $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+                curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
+                
+                // Set headers
+                $headers = [
+                    'Accept: application/json',
+                    'Accept-Language: en-US,en;q=0.9',
+                    'Origin: https://www.instagram.com',
+                    'Referer: https://www.instagram.com/'
+                ];
+                
+                // Set cookie if session required
+                if ($session) {
+                    $headers[] = 'Cookie: ig_cb=1; ig_did=BF4C1D83-0C43-45D0-8A51-5DCF7D5DB760;';
+                }
+                
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                
+                // Execute request
+                $response = curl_exec($ch);
+                
+                // Check for errors
+                if (curl_errno($ch)) {
+                    throw new \Exception('Error fetching data: ' . curl_error($ch));
+                }
+                
+                // Get HTTP response code
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                
+                // Get header size
+                $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                
+                curl_close($ch);
+                
+                // Handle response based on HTTP code
+                if ($httpCode !== 200) {
+                    throw new \Exception("Request failed with HTTP code $httpCode");
+                }
+                
+                // Split headers and body
+                $headerContent = substr($response, 0, $headerSize);
+                $body = substr($response, $headerSize);
+                
+                // Parse JSON response
+                $obj = json_decode($body);
+                if ($obj === null) {
+                    throw new \Exception('Invalid JSON response');
+                }
+                
+                return $obj;
+            } catch (\Exception $requestException) {
+                // Log the exception but try the failsafe method
+                log_message('error', 'Error in safe request method: ' . $requestException->getMessage());
+                
+                // Don't fall through here - use the requestWithoutCookieProcessing method
+                return self::requestWithoutCookieProcessing($endpoint, $session, $username, $password);
+            }
+            
         } catch (\ErrorException $e) {
             // Handle specifically the "Undefined array key 'Set-Cookie'" error
             if (strpos($e->getMessage(), "Undefined array key 'Set-Cookie'") !== false) {
@@ -328,7 +509,22 @@ class InstaWrapper extends Instagram
         
         $ch = curl_init();
         
-        curl_setopt($ch, CURLOPT_URL, "https://www.instagram.com/api/v1/" . $endpoint);
+        // Process the URL in the same way as the main request method
+        $url = 'https://www.instagram.com/';
+        if (substr($endpoint, 0, 8) === 'https://') {
+            $url = $endpoint;
+        } else if (substr($endpoint, 0, 3) === 'api') {
+            // If it's an API endpoint (starting with 'api'), keep it as is
+            $url = 'https://www.instagram.com/' . $endpoint;
+        } else if (substr($endpoint, 0, 1) === '/') {
+            // If it starts with a slash, strip it
+            $url = 'https://www.instagram.com' . $endpoint;
+        } else {
+            // Otherwise add api/v1/ prefix for Instagram API endpoints
+            $url = 'https://www.instagram.com/api/v1/' . $endpoint;
+        }
+        
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array_map(function($k, $v) {
@@ -358,6 +554,178 @@ class InstaWrapper extends Instagram
         // Handle invalid JSON response
         if ($obj === null) {
             throw new \Exception('Invalid JSON response');
+        }
+        
+        return $obj;
+    }
+    
+    /**
+     * Make a request using the Instagram Meta API key
+     * 
+     * @param string $endpoint
+     * @return \stdClass
+     * @throws \Exception
+     */
+    private static function requestWithApiKey($endpoint)
+    {
+        // Extract the request type from the endpoint
+        $type = 'unknown';
+        if (strpos($endpoint, 'search') !== false) {
+            $type = 'search';
+        } else if (strpos($endpoint, 'user') !== false || strpos($endpoint, 'username') !== false) {
+            $type = 'user';
+        } else if (strpos($endpoint, 'media') !== false) {
+            $type = 'media';
+        } else if (strpos($endpoint, 'tag') !== false || strpos($endpoint, 'hashtag') !== false) {
+            $type = 'hashtag';
+        }
+        
+        // Log the request type for debugging
+        log_message('info', 'Instagram Meta API request type: ' . $type);
+        
+        // Parse the endpoint to build the Meta API URL
+        // The Instagram Graph API endpoints are different from the web scraper endpoints
+        // Here we're adapting our endpoint pattern to match the Meta API
+        
+        // Base URL for Instagram Graph API
+        $baseUrl = 'https://graph.instagram.com/';
+        
+        // Add API version
+        $apiVersion = 'v13.0/';
+        
+        // Build the full URL with the API key
+        $url = $baseUrl . $apiVersion;
+        
+        // Determine the specific endpoint based on the request type
+        switch ($type) {
+            case 'search':
+                // Extract the query from the endpoint (simplified for this example)
+                $query = '';
+                if (preg_match('/query=([^&]+)/', $endpoint, $matches)) {
+                    $query = urldecode($matches[1]);
+                }
+                
+                // For search, use the Facebook Graph API search endpoint
+                $url .= 'ig_hashtag_search?q=' . urlencode($query) . '&access_token=' . self::$apiKey;
+                break;
+                
+            case 'user':
+                // Extract username if present
+                $username = '';
+                if (preg_match('/username=([^&]+)/', $endpoint, $matches)) {
+                    $username = $matches[1];
+                }
+                
+                // For user info, use the /me endpoint or search for the user
+                if (empty($username)) {
+                    $url .= 'me?fields=id,username,name,profile_picture_url,biography,followers_count,follows_count,media_count&access_token=' . self::$apiKey;
+                } else {
+                    // Note: Direct username lookup requires a Business/Creator account and permissions
+                    // This is a simplified approach and may not work without proper permissions
+                    $url .= 'ig_username/' . $username . '?fields=id,username,name,profile_picture_url,biography,followers_count,follows_count,media_count&access_token=' . self::$apiKey;
+                }
+                break;
+                
+            case 'media':
+                // For media, use the /media endpoint
+                // Extract the media ID or shortcode if present
+                $mediaId = '';
+                if (preg_match('/media\/([^\/]+)/', $endpoint, $matches)) {
+                    $mediaId = $matches[1];
+                }
+                
+                if (!empty($mediaId)) {
+                    $url .= $mediaId . '?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username&access_token=' . self::$apiKey;
+                } else {
+                    // If no specific media ID, fetch user media
+                    $url .= 'me/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username&access_token=' . self::$apiKey;
+                }
+                break;
+                
+            case 'hashtag':
+                // Extract the hashtag from the endpoint
+                $hashtag = '';
+                if (preg_match('/tag\/([^\/]+)/', $endpoint, $matches)) {
+                    $hashtag = $matches[1];
+                }
+                
+                if (!empty($hashtag)) {
+                    // First get the hashtag ID, then get the media
+                    // This is a two-step process in the Graph API
+                    $hashtagIdUrl = $baseUrl . $apiVersion . 'ig_hashtag_search?q=' . urlencode($hashtag) . '&access_token=' . self::$apiKey;
+                    
+                    $hashtagResponse = self::makeApiRequest($hashtagIdUrl);
+                    
+                    if (isset($hashtagResponse->data) && is_array($hashtagResponse->data) && count($hashtagResponse->data) > 0) {
+                        $hashtagId = $hashtagResponse->data[0]->id;
+                        
+                        // Now get the media for this hashtag
+                        $url = $baseUrl . $apiVersion . $hashtagId . '/recent_media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username&access_token=' . self::$apiKey;
+                    } else {
+                        throw new \Exception("Hashtag not found: " . $hashtag);
+                    }
+                } else {
+                    throw new \Exception("Hashtag parameter is required");
+                }
+                break;
+                
+            default:
+                // For other endpoints, try to use the raw endpoint with the API key
+                $url .= $endpoint;
+                if (strpos($url, '?') !== false) {
+                    $url .= '&access_token=' . self::$apiKey;
+                } else {
+                    $url .= '?access_token=' . self::$apiKey;
+                }
+                break;
+        }
+        
+        // Make the actual API request
+        return self::makeApiRequest($url);
+    }
+    
+    /**
+     * Make an API request to the given URL
+     * 
+     * @param string $url
+     * @return \stdClass
+     * @throws \Exception
+     */
+    private static function makeApiRequest($url)
+    {
+        $ch = curl_init();
+        
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Accept: application/json',
+            'User-Agent: SIPANDA Instagram Tool/1.0'
+        ]);
+        
+        // Execute the request
+        $response = curl_exec($ch);
+        
+        // Check for errors
+        if (curl_errno($ch)) {
+            throw new \Exception('Error fetching data: ' . curl_error($ch));
+        }
+        
+        // Get HTTP response code
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        
+        curl_close($ch);
+        
+        // Handle response based on HTTP code
+        if ($httpCode !== 200) {
+            throw new \Exception("API request failed with HTTP code $httpCode: $response");
+        }
+        
+        $obj = json_decode($response);
+        
+        // Handle invalid JSON response
+        if ($obj === null) {
+            throw new \Exception('Invalid JSON response: ' . $response);
         }
         
         return $obj;
