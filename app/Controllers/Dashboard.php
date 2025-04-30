@@ -15,7 +15,6 @@ class Dashboard extends BaseController
 
     public function __construct()
     {
-        $this->medTransModel = new MedTransModel();
     }
     public function index()
     {
@@ -33,11 +32,5 @@ class Dashboard extends BaseController
         ];
 
         return view($this->theme->getThemePath() . '/dashboard', $data);
-    }
-
-    public function test($id)
-    {
-        $medrec = $this->medTransModel->getTransById($id);
-        pre($medrec);
     }
 } 
