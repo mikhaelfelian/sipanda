@@ -1,28 +1,28 @@
 <?= $this->extend(theme_path('main')) ?>
 
 <?= $this->section('content') ?>
-<section class="content">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-4">
-                <!-- OSINT Analysis Card -->
-                <div class="card">
-                    <div class="card-header">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-4">
+                    <!-- OSINT Analysis Card -->
+                    <div class="card">
+                        <div class="card-header">
                         <h3 class="card-title">Analisis OSINT</h3>
-                    </div>
-                    <div class="card-body">
+                        </div>
+                        <div class="card-body">
                         <div
                             class="info-box bg-<?= $osintAnalysis['trust_score'] >= 70 ? 'success' : ($osintAnalysis['trust_score'] >= 40 ? 'warning' : 'danger') ?>">
-                            <span class="info-box-icon"><i class="fas fa-shield-alt"></i></span>
-                            <div class="info-box-content">
+                                <span class="info-box-icon"><i class="fas fa-shield-alt"></i></span>
+                                <div class="info-box-content">
                                 <span class="info-box-text">Skor Kepercayaan</span>
-                                <span class="info-box-number"><?= $osintAnalysis['trust_score'] ?>%</span>
-                                <div class="progress">
+                                    <span class="info-box-number"><?= $osintAnalysis['trust_score'] ?>%</span>
+                                    <div class="progress">
                                     <div class="progress-bar" style="width: <?= $osintAnalysis['trust_score'] ?>%">
+                                    </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
                         <div class="mt-4">
                             <h5>Analisis Sumber</h5>
@@ -47,9 +47,9 @@
                                     <!-- Remove or implement recent_updates as needed -->
                                 </ul>
                             </div>
-                        </div>
+                            </div>
 
-                        <div class="mt-4">
+                            <div class="mt-4">
                             <h5>Analisis Konten</h5>
                             <?php
                             // Calculate content analysis summary
@@ -65,7 +65,7 @@
                                 $hasSuspiciousKeywords = true;   // If there are threat indicators, suspicious keywords exist
                             }
                             ?>
-                            <ul class="list-unstyled">
+                                <ul class="list-unstyled">
                                 <li>
                                     <i
                                         class="fas fa-<?= $hasProfessionalLanguage ? 'check' : 'times' ?> text-<?= $hasProfessionalLanguage ? 'success' : 'danger' ?>"></i>
@@ -81,8 +81,8 @@
                                         class="fas fa-<?= $hasCredibleSources ? 'check' : 'times' ?> text-<?= $hasCredibleSources ? 'success' : 'danger' ?>"></i>
                                     Sumber Terpercaya
                                 </li>
-                            </ul>
-                        </div>
+                                </ul>
+                            </div>
                         <?php if (!empty($osintAnalysis['recommendations'])): ?>
                             <div class="mt-4">
                                 <h5>Rekomendasi Keamanan</h5>
@@ -94,24 +94,24 @@
                                     <?php endforeach; ?>
                                 </ul>
                             </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-md-8">
-                <!-- SERP Results -->
-                <div class="card">
-                    <div class="card-header">
+                <div class="col-md-8">
+                    <!-- SERP Results -->
+                    <div class="card">
+                        <div class="card-header">
                         <h3 class="card-title">Hasil Pencarian</h3>
-                    </div>
-                    <div class="card-body">
-                        <?php if (!empty($results)): ?>
-                            <?php foreach ($results as $result): ?>
-                                <div class="search-result mb-4">
+                        </div>
+                        <div class="card-body">
+                            <?php if (!empty($results)): ?>
+                                <?php foreach ($results as $result): ?>
+                                    <div class="search-result mb-4">
                                     <h4><a href="<?= esc($result['link']) ?>" target="_blank"><?= esc($result['title']) ?></a>
                                     </h4>
-                                    <p class="text-muted"><?= esc($result['link']) ?></p>
+                                        <p class="text-muted"><?= esc($result['link']) ?></p>
                                     <p class="text-muted"><i class="far fa-clock"></i> 
                                         <?php 
                                         if (isset($result['formatted_date'])) {
@@ -149,12 +149,12 @@
                                         Analisis
                                     </button>
                                     <div class="analyze-result mt-2"></div>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
                             <p>Tidak ada hasil ditemukan.</p>
-                        <?php endif; ?>
-                    </div>
+                            <?php endif; ?>
+                        </div>
                     <div class="card-footer">
                         <button class="btn btn-primary btn-export-all-pdf">
                             <i class="fas fa-file-pdf"></i> Ekspor ke PDF
@@ -163,11 +163,11 @@
                             <i class="fas fa-file-alt"></i> Ekspor ke Teks
                         </button>
                     </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 <script>
 $(document).on('click', '.btn-analyze', function() {
     var title = $(this).data('title') || '';
