@@ -97,6 +97,92 @@
                             <?php endif; ?>
                         </div>
                     </div>
+
+                    <?php if (!empty($aiAnalysis) && $useAI): ?>
+                    <!-- AI Analysis Card -->
+                    <div class="card">
+                        <div class="card-header bg-primary">
+                            <h3 class="card-title"><i class="fas fa-robot mr-2"></i> Analisis AI</h3>
+                        </div>
+                        <div class="card-body">
+                            <?php if (isset($aiAnalysis['error'])): ?>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-circle"></i> <?= $aiAnalysis['error'] ?>
+                                </div>
+                            <?php elseif (isset($aiAnalysis['analysis'])): ?>
+                                <div class="alert alert-info">
+                                    <?= nl2br(esc($aiAnalysis['analysis'])) ?>
+                                </div>
+                            <?php else: ?>
+                                <?php if (isset($aiAnalysis['topik_utama']) || isset($aiAnalysis['topikUtama'])): ?>
+                                    <div class="mb-3">
+                                        <h5><i class="fas fa-file-alt mr-1"></i> Topik Utama</h5>
+                                        <p><?= esc($aiAnalysis['topik_utama'] ?? $aiAnalysis['topikUtama']) ?></p>
+                                        
+                                        <?php if (isset($aiAnalysis['sub_topik']) || isset($aiAnalysis['subTopik'])): ?>
+                                            <h6 class="mt-2">Sub-topik Relevan:</h6>
+                                            <ul>
+                                                <?php 
+                                                $subTopics = $aiAnalysis['sub_topik'] ?? $aiAnalysis['subTopik'] ?? [];
+                                                if (is_string($subTopics)) {
+                                                    echo "<li>" . esc($subTopics) . "</li>";
+                                                } else if (is_array($subTopics)) {
+                                                    foreach ($subTopics as $topic): 
+                                                ?>
+                                                    <li><?= is_array($topic) ? esc(json_encode($topic)) : esc($topic) ?></li>
+                                                <?php 
+                                                    endforeach; 
+                                                }
+                                                ?>
+                                            </ul>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if (isset($aiAnalysis['kata_kunci_tambahan']) || isset($aiAnalysis['kataKunciTambahan'])): ?>
+                                    <div class="mb-3">
+                                        <h5><i class="fas fa-search-plus mr-1"></i> Kata Kunci Tambahan</h5>
+                                        <div class="mt-2">
+                                            <?php 
+                                            $keywords = $aiAnalysis['kata_kunci_tambahan'] ?? $aiAnalysis['kataKunciTambahan'] ?? [];
+                                            if (is_string($keywords)) {
+                                                echo "<span class='badge badge-info mr-1'>" . esc($keywords) . "</span>";
+                                            } else if (is_array($keywords)) {
+                                                foreach ($keywords as $keyword): 
+                                            ?>
+                                                <span class="badge badge-info mr-1"><?= is_array($keyword) ? esc(json_encode($keyword)) : esc($keyword) ?></span>
+                                            <?php 
+                                                endforeach; 
+                                            }
+                                            ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if (isset($aiAnalysis['maksud_pengguna']) || isset($aiAnalysis['maksudPengguna']) || isset($aiAnalysis['intent'])): ?>
+                                    <div class="mb-3">
+                                        <h5><i class="fas fa-bullseye mr-1"></i> Kemungkinan Maksud Pengguna</h5>
+                                        <p><?= esc($aiAnalysis['maksud_pengguna'] ?? $aiAnalysis['maksudPengguna'] ?? $aiAnalysis['intent'] ?? '') ?></p>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if (isset($aiAnalysis['kategori']) || isset($aiAnalysis['domain'])): ?>
+                                    <div class="mb-3">
+                                        <h5><i class="fas fa-tag mr-1"></i> Kategori/Domain</h5>
+                                        <span class="badge badge-primary"><?= esc($aiAnalysis['kategori'] ?? $aiAnalysis['domain'] ?? '') ?></span>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if (isset($aiAnalysis['bias']) || isset($aiAnalysis['potensi_bias'])): ?>
+                                    <div class="mb-3">
+                                        <h5><i class="fas fa-balance-scale mr-1"></i> Potensi Bias</h5>
+                                        <p class="text-muted"><?= esc($aiAnalysis['bias'] ?? $aiAnalysis['potensi_bias'] ?? '') ?></p>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="col-md-8">
@@ -169,213 +255,240 @@
         </div>
     </section>
 <script>
-$(document).on('click', '.btn-analyze', function() {
-    var title = $(this).data('title') || '';
-    var snippet = $(this).data('snippet') || '';
-    var text = title + ' ' + snippet;
-    var resultDiv = $(this).next('.analyze-result');
-    
-    resultDiv.html('Menganalisis...');
-    
-    $.ajax({
-        url: '<?= site_url('serp/analyzeNews') ?>',
-        type: 'POST',
-        data: {
-            text: text,
-            <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-        },
-        success: function(data) {
-            resultDiv.html(
-                '<span class="badge badge-info">Sentimen: ' + data.sentiment + '</span> ' +
-                '<span class="badge badge-warning">Prediksi Viral: ' + data.viral + '</span>'
-            );
-        },
-        error: function(xhr) {
-            resultDiv.html('<span class="badge badge-danger">Error: ' + xhr.status + ' ' + xhr.statusText + '</span>');
-        }
-    });
-});
+$(document).ready(function() {
+    // Analyze button click
+    $('.btn-analyze').on('click', function() {
+        var title = $(this).data('title');
+        var snippet = $(this).data('snippet');
+        var button = $(this);
+        var resultDiv = button.siblings('.analyze-result');
 
-// Export all results to a single PDF
-$('.btn-export-all-pdf').click(function() {
-    // Show loading state
-    var $btn = $(this);
-    var originalHtml = $btn.html();
-    $btn.html('<i class="fas fa-spinner fa-spin"></i> Generating PDF...').attr('disabled', true);
-    
-    // Collect all search results
-    var results = [];
-    $('.search-result').each(function() {
-        var $result = $(this);
-        var title = $result.find('h4 a').text();
-        var link = $result.find('h4 a').attr('href');
-        var snippet = '';
-        
-        // Get published date from timestamp display
-        var dateText = $result.find('p').eq(1).text().trim();
-        var date = '';
-        if (dateText) {
-            // Try to extract the date part if it's not a source label
-            if (dateText.indexOf('Sumber:') === -1) {
-                date = dateText;
+        // Check if analysis already done
+        if (resultDiv.html() !== '') {
+            resultDiv.toggle();
+            return;
+        }
+
+        // Show loading
+        resultDiv.html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Sedang menganalisis...</div>');
+
+        $.ajax({
+            url: '<?= base_url('serp/sentiment/analyze') ?>',
+            type: 'POST',
+            data: {
+                text: title + ' ' + snippet
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    var sentiment = response.data.sentiment;
+                    var badgeClass = sentiment === 'positive' ? 'success' : (sentiment === 'negative' ? 'danger' : 'warning');
+                    var sentimentText = sentiment === 'positive' ? 'Positif' : (sentiment === 'negative' ? 'Negatif' : 'Netral');
+                    
+                    var html = '<div class="card">';
+                    html += '<div class="card-header bg-' + badgeClass + '">';
+                    html += '<h5 class="mb-0">Sentimen: <span class="badge badge-light">' + sentimentText + '</span></h5>';
+                    html += '</div>';
+                    html += '<div class="card-body">';
+                    html += '<div class="row">';
+                    
+                    // Scores
+                    html += '<div class="col-md-6">';
+                    html += '<p><strong>Skor Positif:</strong> <span class="badge badge-success">' + response.data.positive_score + '</span></p>';
+                    html += '<p><strong>Skor Negatif:</strong> <span class="badge badge-danger">' + response.data.negative_score + '</span></p>';
+                    html += '</div>';
+                    
+                    // Words lists
+                    html += '<div class="col-md-6">';
+                    if (response.data.positive_words && response.data.positive_words.length > 0) {
+                        html += '<p><strong>Kata Positif:</strong> ';
+                        response.data.positive_words.forEach(function(word) {
+                            html += '<span class="badge badge-light mr-1">' + word + '</span>';
+                        });
+                        html += '</p>';
+                    }
+                    
+                    if (response.data.negative_words && response.data.negative_words.length > 0) {
+                        html += '<p><strong>Kata Negatif:</strong> ';
+                        response.data.negative_words.forEach(function(word) {
+                            html += '<span class="badge badge-light mr-1">' + word + '</span>';
+                        });
+                        html += '</p>';
+                    }
+                    html += '</div>';
+                    
+                    html += '</div>'; // row
+                    html += '</div>'; // card-body
+                    html += '</div>'; // card
+                    
+                    resultDiv.html(html);
+                } else {
+                    resultDiv.html('<div class="alert alert-danger">' + response.message + '</div>');
+                }
+            },
+            error: function() {
+                resultDiv.html('<div class="alert alert-danger">Terjadi kesalahan saat menganalisis teks.</div>');
             }
-        }
-        
-        // Get snippet text, avoiding the <em> tag if there's no snippet
-        var $snippetP = $result.find('p').eq(2);
-        if ($snippetP.find('em').length > 0 && $snippetP.text().trim() === 'Tidak ada cuplikan tersedia.') {
-            snippet = 'No snippet available';
-        } else {
-            snippet = $snippetP.text();
-        }
-        
-        // Get analysis results if available
-        var sentiment = '';
-        var viral = '';
-        var $analyzeResult = $result.find('.analyze-result');
-        
-        if ($analyzeResult.find('.badge-info').length > 0) {
-            sentiment = $analyzeResult.find('.badge-info').text().replace('Sentimen: ', '');
-            viral = $analyzeResult.find('.badge-warning').text().replace('Prediksi Viral: ', '');
-        }
-        
-        results.push({
-            title: title,
-            link: link,
-            snippet: snippet,
-            sentiment: sentiment,
-            viral: viral,
-            date: date
         });
     });
-    
-    // Send all results to generate PDF
-    $.ajax({
-        url: '<?= site_url('serp/exportAllResultsPdf') ?>',
-        type: 'POST',
-        data: {
-            query: '<?= $query ?>',
-            results: JSON.stringify(results),
-            <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-        },
-        success: function(response) {
-            if (response.success) {
-                // Create a download link for the PDF
-                var pdfData = 'data:application/pdf;base64,' + response.pdf;
-                var link = document.createElement('a');
-                link.href = pdfData;
-                link.download = 'search_results_report.pdf';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // Show success message using toastr
-                toastr.success('PDF berhasil dibuat');
-            } else {
-                // Show error message using toastr
-                toastr.error(response.message || 'Gagal membuat PDF');
-            }
-        },
-        error: function() {
-            // Show error message using toastr
-            toastr.error('Gagal meng-export PDF. Silakan coba lagi.');
-        },
-        complete: function() {
-            // Reset button state
-            $btn.html(originalHtml).attr('disabled', false);
-        }
-    });
-});
 
-// Export results to formatted text
-$('.btn-export-text').click(function() {
-    // Show loading state
-    var $btn = $(this);
-    var originalHtml = $btn.html();
-    $btn.html('<i class="fas fa-spinner fa-spin"></i> Generating Text...').attr('disabled', true);
-    
-    // Collect all search results
-    var results = [];
-    $('.search-result').each(function() {
-        var $result = $(this);
-        var title = $result.find('h4 a').text();
-        var link = $result.find('h4 a').attr('href');
-        var snippet = '';
-        
-        // Get published date from timestamp display
-        var dateText = $result.find('p').eq(1).text().trim();
-        var date = '';
-        if (dateText) {
-            // Try to extract the date part if it's not a source label
-            if (dateText.indexOf('Sumber:') === -1) {
-                date = dateText;
+    // Export all to PDF
+    $('.btn-export-all-pdf').on('click', function() {
+        var searchKeyword = '<?= isset($keyword) ? esc($keyword) : "-" ?>';
+        var searchParam = '<?= isset($searchTool) ? esc($searchTool) : "-" ?>';
+        var osintAnalysisData = <?= json_encode($osintAnalysis) ?>;
+        var aiAnalysisData = <?= !empty($aiAnalysis) && $useAI ? json_encode($aiAnalysis) : 'null' ?>;
+        var results = <?= json_encode($results) ?>;
+
+        // Show loading
+        Swal.fire({
+            title: 'Sedang Menyiapkan PDF',
+            html: 'Mohon tunggu...',
+            timerProgressBar: true,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+            allowOutsideClick: false
+        });
+
+        $.ajax({
+            url: '<?= base_url('serp/export-pdf') ?>',
+            type: 'POST',
+            data: {
+                search_keyword: searchKeyword,
+                search_param: searchParam,
+                osint_analysis: JSON.stringify(osintAnalysisData),
+                ai_analysis: JSON.stringify(aiAnalysisData),
+                search_results: JSON.stringify(results)
+            },
+            dataType: 'json',
+            success: function(response) {
+                Swal.close();
+                if (response.success) {
+                    // Create download link
+                    var link = document.createElement('a');
+                    link.href = response.file_url;
+                    link.download = response.file_name;
+                    link.click();
+
+                    // Success message
+                    Toastify({
+                        text: "PDF berhasil dibuat!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#28a745",
+                    }).showToast();
+                } else {
+                    // Error message
+                    Toastify({
+                        text: response.message || "Gagal membuat PDF",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc3545",
+                    }).showToast();
+                }
+            },
+            error: function() {
+                Swal.close();
+                Toastify({
+                    text: "Terjadi kesalahan saat membuat PDF",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545",
+                }).showToast();
             }
-        }
-        
-        // Get snippet text, avoiding the <em> tag if there's no snippet
-        var $snippetP = $result.find('p').eq(2);
-        if ($snippetP.find('em').length > 0 && $snippetP.text().trim() === 'Tidak ada cuplikan tersedia.') {
-            snippet = 'No snippet available';
-        } else {
-            snippet = $snippetP.text();
-        }
-        
-        // Get analysis results if available
-        var sentiment = '';
-        var viral = '';
-        var $analyzeResult = $result.find('.analyze-result');
-        
-        if ($analyzeResult.find('.badge-info').length > 0) {
-            sentiment = $analyzeResult.find('.badge-info').text().replace('Sentimen: ', '');
-            viral = $analyzeResult.find('.badge-warning').text().replace('Prediksi Viral: ', '');
-        }
-        
-        results.push({
-            title: title,
-            link: link,
-            snippet: snippet,
-            sentiment: sentiment,
-            viral: viral,
-            date: date
         });
     });
-    
-    // Send all results to generate text report
-    $.ajax({
-        url: '<?= site_url('serp/exportToText') ?>',
-        type: 'POST',
-        data: {
-            query: '<?= $query ?>',
-            results: JSON.stringify(results),
-            <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-        },
-        success: function(response) {
-            if (response.success) {
-                // Create a blob and download the text file
-                var today = new Date();
-                var blob = new Blob([response.text], { type: 'text/plain;charset=utf-8' });
-                var link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'laporan_patroli_cyber_' + today.toISOString().slice(0, 10) + '.txt';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // Show success message using toastr
-                toastr.success('Teks laporan berhasil dibuat');
+
+    // Export to Text
+    $('.btn-export-text').on('click', function() {
+        var searchKeyword = '<?= isset($keyword) ? esc($keyword) : "-" ?>';
+        var searchParam = '<?= isset($searchTool) ? esc($searchTool) : "-" ?>';
+        var osintAnalysisData = <?= json_encode($osintAnalysis) ?>;
+        var aiAnalysisData = <?= !empty($aiAnalysis) && $useAI ? json_encode($aiAnalysis) : 'null' ?>;
+        var results = <?= json_encode($results) ?>;
+        
+        // Create text content
+        var textContent = "LAPORAN PENCARIAN SERP\n";
+        textContent += "==============================\n\n";
+        textContent += "Kata Kunci: " + searchKeyword + "\n";
+        textContent += "Parameter Pencarian: " + searchParam + "\n";
+        textContent += "Tanggal Ekspor: " + new Date().toLocaleString() + "\n\n";
+        
+        // OSINT Analysis
+        textContent += "ANALISIS OSINT\n";
+        textContent += "==============================\n";
+        textContent += "Skor Kepercayaan: " + osintAnalysisData.trust_score + "%\n\n";
+        
+        // AI Analysis if available
+        if (aiAnalysisData) {
+            textContent += "ANALISIS AI\n";
+            textContent += "==============================\n";
+            
+            if (aiAnalysisData.analysis) {
+                textContent += aiAnalysisData.analysis + "\n\n";
             } else {
-                // Show error message using toastr
-                toastr.error(response.message || 'Gagal membuat laporan teks');
+                if (aiAnalysisData.topik_utama || aiAnalysisData.topikUtama) {
+                    textContent += "Topik Utama: " + (aiAnalysisData.topik_utama || aiAnalysisData.topikUtama) + "\n";
+                }
+                
+                if (aiAnalysisData.sub_topik || aiAnalysisData.subTopik) {
+                    textContent += "Sub-topik Relevan:\n";
+                    var subTopics = aiAnalysisData.sub_topik || aiAnalysisData.subTopik || [];
+                    if (typeof subTopics === 'string') {
+                        textContent += "- " + subTopics + "\n";
+                    } else if (Array.isArray(subTopics)) {
+                        subTopics.forEach(function(topic) {
+                            textContent += "- " + (typeof topic === 'object' ? JSON.stringify(topic) : topic) + "\n";
+                        });
+                    }
+                }
+                
+                if (aiAnalysisData.maksud_pengguna || aiAnalysisData.maksudPengguna || aiAnalysisData.intent) {
+                    textContent += "Maksud Pengguna: " + (aiAnalysisData.maksud_pengguna || aiAnalysisData.maksudPengguna || aiAnalysisData.intent) + "\n";
+                }
             }
-        },
-        error: function() {
-            // Show error message using toastr
-            toastr.error('Gagal meng-export teks. Silakan coba lagi.');
-        },
-        complete: function() {
-            // Reset button state
-            $btn.html(originalHtml).attr('disabled', false);
+            textContent += "\n";
         }
+        
+        // Search results
+        textContent += "HASIL PENCARIAN\n";
+        textContent += "==============================\n\n";
+        if (results && results.length > 0) {
+            results.forEach(function(result, index) {
+                textContent += (index + 1) + ". " + result.title + "\n";
+                textContent += "   URL: " + result.link + "\n";
+                if (result.snippet) {
+                    textContent += "   Cuplikan: " + (typeof result.snippet === 'object' ? JSON.stringify(result.snippet) : result.snippet) + "\n";
+                }
+                textContent += "\n";
+            });
+        } else {
+            textContent += "Tidak ada hasil ditemukan.\n";
+        }
+
+        // Create and download text file
+        var blob = new Blob([textContent], { type: 'text/plain' });
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'laporan_pencarian_' + searchKeyword.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_' + new Date().getTime() + '.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        // Success message
+        Toastify({
+            text: "Teks berhasil diekspor!",
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#28a745",
+        }).showToast();
     });
 });
 </script>

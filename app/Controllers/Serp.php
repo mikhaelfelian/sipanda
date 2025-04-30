@@ -48,7 +48,9 @@ class Serp extends BaseController
         // Validate input
         $rules = [
             'query' => 'required|min_length[3]|max_length[255]',
-            'deep_search' => 'permit_empty|in_list[0,1]'
+            'deep_search' => 'permit_empty|in_list[0,1]',
+            'province' => 'permit_empty|max_length[100]',
+            'country' => 'permit_empty|max_length[100]'
         ];
 
         if (!$this->validate($rules)) {
@@ -57,6 +59,8 @@ class Serp extends BaseController
 
         $query = $this->request->getPost('query');
         $deepSearch = (bool)$this->request->getPost('deep_search');
+        $province = $this->request->getPost('province');
+        $country = $this->request->getPost('country');
 
         // Save keyword to database
         $this->keywordModel->save([
@@ -70,11 +74,11 @@ class Serp extends BaseController
 
         // Prepare search parameters
         $searchParams = [
-            'engine' => 'google',
+            'engine'        => 'google',
             'google_domain' => 'google.co.id',
-            'gl' => 'id',
-            'hl' => 'id',
-            'num' => 20
+            'gl'            => 'id',
+            'hl'            => 'id',
+            'num'           => 20
         ];
 
         // Add deep search parameters if enabled
@@ -84,23 +88,31 @@ class Serp extends BaseController
             ]);
         }
 
+        // Add province to query if provided
+        if (!empty($province)) {
+            $query .= ' ' . $province;
+        }
+
+        // Add country-specific parameters if provided
+        if (!empty($country)) {
+            // Override default country settings with the specified country
+            $searchParams['gl'] = strtolower($country);
+            
+            // For Indonesia, use google.co.id (default)
+            if ($country == 'ID') {
+                $searchParams['google_domain'] = 'google.co.id';
+            }
+        }
+
         try {
             // Perform search
-            $results = $this->serpApi->search($query, $searchParams);
+            // $results = $this->serpApi->search($query, $searchParams);
 
-            // Prepare data for view
-            $data = [
-                'title' => 'Search Results',
-                'query' => $query,
-                'results' => $results['organic_results'] ?? [],
-                'osintAnalysis' => $osintAnalysis,
-                'deepSearch' => $deepSearch,
-                'Pengaturan' => $this->pengaturan,
-                'user' => $this->ionAuth->user()->row(),
-                'isMenuActive' => isMenuActive('serp') ? 'active' : ''
-            ];
-
-            return redirect()->to(base_url('serp/result?q=' . urlencode($query).'&deep_search='.$deepSearch));
+            return redirect()->to(base_url('serp/result?q=' . urlencode($query) . 
+                '&deep_search=' . $deepSearch .
+                (!empty($province) ? '&province=' . urlencode($province) : '') .
+                (!empty($country) ? '&country=' . urlencode($country) : '')
+            ));
         } catch (\RuntimeException $e) {
             if (strpos($e->getMessage(), 'timed out') !== false) {
                 // Show a toast error for timeout
@@ -571,6 +583,7 @@ class Serp extends BaseController
         // Get query from URL parameter
         $query = $this->request->getGet('q');
         $deepSearch = (bool)$this->request->getGet('deep_search', FILTER_VALIDATE_BOOLEAN);
+        $useAI = (bool)$this->request->getGet('use_ai', FILTER_VALIDATE_BOOLEAN);
         
         // Validate query
         if (empty($query) || strlen($query) < 3) {
@@ -579,6 +592,52 @@ class Serp extends BaseController
         
         // Perform OSINT analysis
         $osintAnalysis = $this->osintAnalyzer->analyzeTrend($query);
+
+        // If AI analysis is requested but not provided in the session, fetch it now
+        $aiAnalysis = [];
+        if ($useAI && !session()->has('ai_analysis')) {
+            // Load ChatGPT service
+            $chatGPTService = new \App\Libraries\ChatGPTService();
+            
+            try {
+                // Create detailed prompt for search context analysis
+                $systemPrompt = "Anda adalah asisten analisis pencarian yang ahli. Analisis konteks pencarian berikut dan berikan insight mengenai:
+                1. Topik utama dan sub-topik yang mungkin relevan
+                2. Kata kunci tambahan yang disarankan untuk eksplorasi lebih lanjut
+                3. Kemungkinan maksud/intent dari pengguna yang melakukan pencarian
+                4. Kategori/domain pengetahuan yang terkait (misalnya: berita, akademik, teknologi, kesehatan, dll)
+                5. Potensi bias atau sudut pandang yang perlu diperhatikan
+                
+                Jawaban harus singkat dan terstruktur dalam format JSON. Gunakan bahasa Indonesia.";
+                
+                // Get AI analysis
+                $aiResponse = $chatGPTService->askWithSystemInstruction(
+                    "Analisis kueri pencarian: \"$query\"", 
+                    $systemPrompt,
+                    'gpt-3.5-turbo',
+                    0.7,
+                    500
+                );
+                
+                // Try to parse JSON response
+                $parsedResponse = json_decode($aiResponse, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($parsedResponse)) {
+                    $aiAnalysis = $parsedResponse;
+                } else {
+                    // If not valid JSON, use text as-is
+                    $aiAnalysis = ['analysis' => $aiResponse];
+                }
+                
+                // Store in session for later use
+                session()->set('ai_analysis', $aiAnalysis);
+            } catch (\Exception $e) {
+                log_message('error', 'ChatGPT analysis error in result(): ' . $e->getMessage());
+                $aiAnalysis = ['error' => 'Analisis AI tidak tersedia saat ini.'];
+            }
+        } else if (session()->has('ai_analysis')) {
+            // Retrieve from session if available
+            $aiAnalysis = session()->get('ai_analysis');
+        }
 
         // Save keyword to database
         $this->keywordModel->save([
@@ -652,7 +711,9 @@ class Serp extends BaseController
                 'query' => $query,
                 'results' => $processedResults,
                 'osintAnalysis' => $osintAnalysis,
+                'aiAnalysis' => $aiAnalysis,  // Add AI analysis
                 'deepSearch' => $deepSearch,
+                'useAI' => $useAI,
                 'Pengaturan' => $this->pengaturan,
                 'user' => $this->ionAuth->user()->row(),
                 'isMenuActive' => isMenuActive('serp') ? 'active' : '',
