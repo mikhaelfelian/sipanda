@@ -8,35 +8,35 @@
                 <!-- Search Form Card -->
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Google Maps Search</h3>
+                        <h3 class="card-title">Pencarian Google Maps</h3>
                     </div>
                     <div class="card-body">
                         <?= form_open('serp/maps/search', ['method' => 'post']) ?>
                             <div class="form-group">
-                                <label for="query">What are you looking for?</label>
+                                <label for="query">Apa yang Anda cari?</label>
                                 <input type="text" class="form-control rounded-0" id="query" name="query"
-                                    placeholder="Enter business, address, or place..." required minlength="3" maxlength="255">
+                                    placeholder="Masukkan bisnis, alamat, atau tempat..." required minlength="3" maxlength="255">
                             </div>
                             <div class="form-group">
-                                <label for="location">Location</label>
+                                <label for="location">Lokasi</label>
                                 <input type="text" class="form-control rounded-0" id="location" name="location"
-                                    placeholder="City, region, or address (default: Indonesia)">
-                                <small class="form-text text-muted">Leave empty to search all of Indonesia</small>
+                                    placeholder="Kota, wilayah, atau alamat (default: Indonesia)">
+                                <small class="form-text text-muted">Biarkan kosong untuk mencari di seluruh Indonesia</small>
                             </div>
-                            <button type="submit" class="btn btn-primary rounded-0">Search Maps</button>
+                            <button type="submit" class="btn btn-primary rounded-0">Cari di Maps</button>
                         <?= form_close() ?>
                     </div>
                 </div>
                 <!-- Map Placeholder (for a future feature) -->
                 <div class="card rounded-0 mt-3">
                     <div class="card-header">
-                        <h3 class="card-title">Preview Map</h3>
+                        <h3 class="card-title">Pratinjau Peta</h3>
                     </div>
                     <div class="card-body text-center bg-light">
                         <div style="height: 300px; display: flex; align-items: center; justify-content: center;">
                             <div>
                                 <i class="fas fa-map-marked-alt fa-5x text-muted mb-3"></i>
-                                <p class="text-muted">Search to display map results</p>
+                                <p class="text-muted">Lakukan pencarian untuk menampilkan hasil peta</p>
                             </div>
                         </div>
                     </div>
@@ -46,7 +46,7 @@
                 <!-- Recent Searches Card -->
                 <div class="card rounded-0 mb-4">
                     <div class="card-header">
-                        <h3 class="card-title">Recent Searches</h3>
+                        <h3 class="card-title">Pencarian Terbaru</h3>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($recentSearches)): ?>
@@ -60,14 +60,14 @@
                                 <?php endforeach; ?>
                             </ul>
                         <?php else: ?>
-                            <p>No recent searches.</p>
+                            <p>Tidak ada pencarian terbaru.</p>
                         <?php endif; ?>
                     </div>
                 </div>
                 <!-- Popular Keywords Card -->
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Popular Keywords</h3>
+                        <h3 class="card-title">Kata Kunci Populer</h3>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($popularKeywords)): ?>
@@ -80,20 +80,20 @@
                                 <?php endforeach; ?>
                             </ul>
                         <?php else: ?>
-                            <p>No popular keywords.</p>
+                            <p>Tidak ada kata kunci populer.</p>
                         <?php endif; ?>
                     </div>
                 </div>
                 <!-- Search Tips Card -->
                 <div class="card rounded-0 mt-4">
                     <div class="card-header">
-                        <h3 class="card-title">Search Tips</h3>
+                        <h3 class="card-title">Tips Pencarian</h3>
                     </div>
                     <div class="card-body">
                         <ul class="list-unstyled">
-                            <li><i class="fas fa-info-circle text-info"></i> Use specific business names for exact matches</li>
-                            <li class="mt-2"><i class="fas fa-info-circle text-info"></i> Try adding a city name for better results</li>
-                            <li class="mt-2"><i class="fas fa-info-circle text-info"></i> Search for categories like "restaurants" or "hotels"</li>
+                            <li><i class="fas fa-info-circle text-info"></i> Gunakan nama bisnis spesifik untuk hasil yang tepat</li>
+                            <li class="mt-2"><i class="fas fa-info-circle text-info"></i> Coba tambahkan nama kota untuk hasil yang lebih baik</li>
+                            <li class="mt-2"><i class="fas fa-info-circle text-info"></i> Cari berdasarkan kategori seperti "restoran" atau "hotel"</li>
                         </ul>
                     </div>
                 </div>

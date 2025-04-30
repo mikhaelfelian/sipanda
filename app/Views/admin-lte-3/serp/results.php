@@ -8,14 +8,14 @@
                 <!-- OSINT Analysis Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">OSINT Analysis</h3>
+                        <h3 class="card-title">Analisis OSINT</h3>
                     </div>
                     <div class="card-body">
                         <div
                             class="info-box bg-<?= $osintAnalysis['trust_score'] >= 70 ? 'success' : ($osintAnalysis['trust_score'] >= 40 ? 'warning' : 'danger') ?>">
                             <span class="info-box-icon"><i class="fas fa-shield-alt"></i></span>
                             <div class="info-box-content">
-                                <span class="info-box-text">Trust Score</span>
+                                <span class="info-box-text">Skor Kepercayaan</span>
                                 <span class="info-box-number"><?= $osintAnalysis['trust_score'] ?>%</span>
                                 <div class="progress">
                                     <div class="progress-bar" style="width: <?= $osintAnalysis['trust_score'] ?>%">
@@ -25,24 +25,24 @@
                         </div>
 
                         <div class="mt-4">
-                            <h5>Source Analysis</h5>
+                            <h5>Analisis Sumber</h5>
                             <div class="mt-4">
-                                <h5>Source Analysis</h5>
+                                <h5>Analisis Sumber</h5>
                                 <ul class="list-unstyled">
                                     <li>
                                         <i
                                             class="fas fa-<?= !empty($osintAnalysis['sources']['verified_sources']) ? 'check' : 'times' ?> text-<?= !empty($osintAnalysis['sources']['verified_sources']) ? 'success' : 'danger' ?>"></i>
-                                        Verified Sources
+                                        Sumber Terverifikasi
                                     </li>
                                     <li>
                                         <i
                                             class="fas fa-<?= !empty($osintAnalysis['sources']['unverified_sources']) ? 'check' : 'times' ?> text-<?= !empty($osintAnalysis['sources']['unverified_sources']) ? 'success' : 'danger' ?>"></i>
-                                        Unverified Sources
+                                        Sumber Tidak Terverifikasi
                                     </li>
                                     <li>
                                         <i
                                             class="fas fa-<?= (count($osintAnalysis['sources']['verified_sources'] ?? []) + count($osintAnalysis['sources']['unverified_sources'] ?? [])) > 1 ? 'check' : 'times' ?> text-<?= (count($osintAnalysis['sources']['verified_sources'] ?? []) + count($osintAnalysis['sources']['unverified_sources'] ?? [])) > 1 ? 'success' : 'danger' ?>"></i>
-                                        Multiple Sources
+                                        Beberapa Sumber
                                     </li>
                                     <!-- Remove or implement recent_updates as needed -->
                                 </ul>
@@ -50,7 +50,7 @@
                         </div>
 
                         <div class="mt-4">
-                            <h5>Content Analysis</h5>
+                            <h5>Analisis Konten</h5>
                             <?php
                             // Calculate content analysis summary
                             $hasProfessionalLanguage = false;
@@ -69,23 +69,23 @@
                                 <li>
                                     <i
                                         class="fas fa-<?= $hasProfessionalLanguage ? 'check' : 'times' ?> text-<?= $hasProfessionalLanguage ? 'success' : 'danger' ?>"></i>
-                                    Professional Language
+                                    Bahasa Profesional
                                 </li>
                                 <li>
                                     <i
                                         class="fas fa-<?= $hasSuspiciousKeywords ? 'times' : 'check' ?> text-<?= $hasSuspiciousKeywords ? 'danger' : 'success' ?>"></i>
-                                    No Suspicious Keywords
+                                    Tidak Ada Kata Kunci Mencurigakan
                                 </li>
                                 <li>
                                     <i
                                         class="fas fa-<?= $hasCredibleSources ? 'check' : 'times' ?> text-<?= $hasCredibleSources ? 'success' : 'danger' ?>"></i>
-                                    Credible Sources
+                                    Sumber Terpercaya
                                 </li>
                             </ul>
                         </div>
                         <?php if (!empty($osintAnalysis['recommendations'])): ?>
                             <div class="mt-4">
-                                <h5>Security Recommendations</h5>
+                                <h5>Rekomendasi Keamanan</h5>
                                 <ul class="list-unstyled">
                                     <?php foreach ($osintAnalysis['recommendations'] as $recommendation): ?>
                                         <li><i class="fas fa-exclamation-triangle text-warning"></i> 
@@ -103,7 +103,7 @@
                 <!-- SERP Results -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Search Results</h3>
+                        <h3 class="card-title">Hasil Pencarian</h3>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($results)): ?>
@@ -121,18 +121,18 @@
                                                 echo esc($result['snippet']);
                                             }
                                         } else {
-                                            echo '<em>No snippet available.</em>';
+                                            echo '<em>Tidak ada cuplikan tersedia.</em>';
                                         }
                                         ?>
                                     </p>
                                     <button class="btn btn-info btn-analyze" data-title="<?= esc($result['title']) ?>" data-snippet="<?= esc(is_array($result['snippet']) ? json_encode($result['snippet']) : $result['snippet']) ?>">
-                                        Analyze
+                                        Analisis
                                     </button>
                                     <div class="analyze-result mt-2"></div>
                                 </div>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <p>No results found.</p>
+                            <p>Tidak ada hasil ditemukan.</p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -146,7 +146,7 @@ $(document).on('click', '.btn-analyze', function() {
     var snippet = $(this).data('snippet');
     var text = title + ' ' + snippet;
     var resultDiv = $(this).next('.analyze-result');
-    resultDiv.html('Analyzing...');
+    resultDiv.html('Menganalisis...');
     
     $.ajax({
         url: '<?= site_url('serp/analyzeNews') ?>',
@@ -157,8 +157,8 @@ $(document).on('click', '.btn-analyze', function() {
         },
         success: function(data) {
             resultDiv.html(
-                '<span class="badge badge-info">Sentiment: ' + data.sentiment + '</span> ' +
-                '<span class="badge badge-warning">Viral Prediction: ' + data.viral + '</span>'
+                '<span class="badge badge-info">Sentimen: ' + data.sentiment + '</span> ' +
+                '<span class="badge badge-warning">Prediksi Viral: ' + data.viral + '</span>'
             );
         },
         error: function(xhr) {

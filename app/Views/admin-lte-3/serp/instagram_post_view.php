@@ -9,11 +9,11 @@
                 <div class="card rounded-0">
                     <div class="card-header">
                         <h3 class="card-title">
-                            <i class="fab fa-instagram mr-2"></i>Instagram Post Details
+                            <i class="fab fa-instagram mr-2"></i>Detail Postingan Instagram
                         </h3>
                         <div class="card-tools">
-                            <a href="javascript:history.back()" class="btn btn-tool" title="Back">
-                                <i class="fas fa-arrow-left"></i> Back
+                            <a href="javascript:history.back()" class="btn btn-tool" title="Kembali">
+                                <i class="fas fa-arrow-left"></i> Kembali
                             </a>
                         </div>
                     </div>
@@ -33,20 +33,20 @@
                                 <?php if ($media->getVideoUrl()): ?>
                                     <video class="img-fluid" controls style="max-height: 600px;">
                                         <source src="<?= esc($media->getVideoUrl()) ?>" type="video/mp4">
-                                        Your browser does not support the video tag.
+                                        Browser Anda tidak mendukung tag video.
                                     </video>
                                 <?php else: ?>
                                     <img src="<?= esc($media->getImageHighResolutionUrl()) ?>" 
-                                         alt="Instagram Post" 
+                                         alt="Postingan Instagram" 
                                          class="img-fluid" 
                                          style="max-height: 600px;">
                                     <div class="mt-2">
-                                        <span class="badge badge-danger">Video (preview only)</span>
+                                        <span class="badge badge-danger">Video (hanya pratinjau)</span>
                                     </div>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <img src="<?= esc($media->getImageHighResolutionUrl()) ?>" 
-                                     alt="Instagram Post" 
+                                     alt="Postingan Instagram" 
                                      class="img-fluid" 
                                      style="max-height: 600px;">
                             <?php endif; ?>
@@ -67,7 +67,7 @@
                                             <?= esc($media->getOwner()->getUsername()) ?>
                                         </a>
                                         <?php if ($media->getOwner()->isVerified()): ?>
-                                            <i class="fas fa-check-circle text-primary ml-1" data-toggle="tooltip" title="Verified Account"></i>
+                                            <i class="fas fa-check-circle text-primary ml-1" data-toggle="tooltip" title="Akun Terverifikasi"></i>
                                         <?php endif; ?>
                                     </h5>
                                     <?php if ($media->getOwner()->getFullName()): ?>
@@ -77,7 +77,7 @@
                                 <a href="https://instagram.com/<?= esc($media->getOwner()->getUsername()) ?>" 
                                    target="_blank" 
                                    class="btn btn-outline-secondary btn-sm ml-auto rounded-0">
-                                    <i class="fas fa-external-link-alt mr-1"></i> Profile
+                                    <i class="fas fa-external-link-alt mr-1"></i> Profil
                                 </a>
                             </div>
                             
@@ -93,19 +93,19 @@
                                 <div class="col-md-4 col-6">
                                     <div class="text-center">
                                         <h4><?= number_format($media->getLikesCount()) ?></h4>
-                                        <small class="text-muted">LIKES</small>
+                                        <small class="text-muted">SUKA</small>
                                     </div>
                                 </div>
                                 <div class="col-md-4 col-6">
                                     <div class="text-center">
                                         <h4><?= number_format($media->getCommentsCount()) ?></h4>
-                                        <small class="text-muted">COMMENTS</small>
+                                        <small class="text-muted">KOMENTAR</small>
                                     </div>
                                 </div>
                                 <div class="col-md-4 col-12 mt-3 mt-md-0">
                                     <div class="text-center">
-                                        <h4><?= $media->getCreatedTime()->format('M d, Y') ?></h4>
-                                        <small class="text-muted">DATE POSTED</small>
+                                        <h4><?= $media->getCreatedTime()->format('d M Y') ?></h4>
+                                        <small class="text-muted">TANGGAL POSTING</small>
                                     </div>
                                 </div>
                             </div>
@@ -146,7 +146,7 @@
                             <!-- External Link -->
                             <div class="mt-4">
                                 <a href="<?= esc($media->getLink()) ?>" target="_blank" class="btn btn-primary rounded-0">
-                                    <i class="fas fa-external-link-alt mr-1"></i> View on Instagram
+                                    <i class="fas fa-external-link-alt mr-1"></i> Lihat di Instagram
                                 </a>
                             </div>
                         </div>
@@ -158,7 +158,7 @@
             <div class="col-md-4">
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Comments (<?= number_format($media->getCommentsCount()) ?>)</h3>
+                        <h3 class="card-title">Komentar (<?= number_format($media->getCommentsCount()) ?>)</h3>
                     </div>
                     <div class="card-body p-0">
                         <?php if (!empty($comments)): ?>
@@ -176,7 +176,7 @@
                                                         <?= esc($comment->getOwner()->getUsername()) ?>
                                                     </a>
                                                     <div class="direct-chat-timestamp text-muted small">
-                                                        <?= $comment->getCreatedAt()->format('M d, Y H:i') ?>
+                                                        <?= $comment->getCreatedAt()->format('d M Y H:i') ?>
                                                     </div>
                                                 </div>
                                             </div>
@@ -190,7 +190,7 @@
                         <?php else: ?>
                             <div class="text-center p-4">
                                 <i class="far fa-comment-dots fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No comments to display</p>
+                                <p class="text-muted">Tidak ada komentar untuk ditampilkan</p>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -202,10 +202,10 @@
         <div class="row mt-3 mb-4">
             <div class="col-12 text-center">
                 <a href="javascript:history.back()" class="btn btn-default rounded-0 mr-2">
-                    <i class="fas fa-arrow-left mr-1"></i> Back to Results
+                    <i class="fas fa-arrow-left mr-1"></i> Kembali ke Hasil
                 </a>
                 <a href="<?= site_url('serp/instagram') ?>" class="btn btn-outline-primary rounded-0">
-                    <i class="fas fa-search mr-1"></i> New Instagram Search
+                    <i class="fas fa-search mr-1"></i> Pencarian Instagram Baru
                 </a>
             </div>
         </div>

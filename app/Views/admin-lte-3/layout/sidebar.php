@@ -46,7 +46,7 @@
                                 class="nav-link <?= isMenuActive('serp/google') ? 'active' : '' ?>">
                                 <?= nbs(3) ?>
                                 <i class="fas fa-search nav-icon"></i>
-                                <p>Google Analysis</p>
+                                <p>Mesin Pencari</p>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -62,7 +62,7 @@
                                 class="nav-link <?= isMenuActive('serp/maps') ? 'active' : '' ?>">
                                 <?= nbs(3) ?>
                                 <i class="fas fa-map-marked-alt nav-icon"></i>
-                                <p>Maps Search</p>
+                                <p>Lokasi Peta</p>
                             </a>
                         </li>
                     </ul>
@@ -81,7 +81,15 @@
                                 class="nav-link <?= isMenuActive('serp') ? 'active' : '' ?>">
                                 <?= nbs(3) ?>
                                 <i class="fas fa-search nav-icon"></i>
-                                <p>Google Analysis</p>
+                                <p>Lokasi Peta</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('serp') ?>"
+                                class="nav-link <?= isMenuActive('serp') ? 'active' : '' ?>">
+                                <?= nbs(3) ?>
+                                <i class="fas fa-search nav-icon"></i>
+                                <p>Lokasi Ponsel</p>
                             </a>
                         </li>
                     </ul>

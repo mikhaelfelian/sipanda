@@ -9,11 +9,11 @@
                 <div class="card rounded-0">
                     <div class="card-header">
                         <h3 class="card-title">
-                            <i class="fab fa-instagram mr-2"></i>Hashtag Search Results for #<?= esc($query) ?>
+                            <i class="fab fa-instagram mr-2"></i>Hasil Pencarian Hashtag #<?= esc($query) ?>
                         </h3>
                         <div class="card-tools">
-                            <a href="<?= site_url('serp/instagram') ?>" class="btn btn-tool" title="New Search">
-                                <i class="fas fa-sync"></i> New Search
+                            <a href="<?= site_url('serp/instagram') ?>" class="btn btn-tool" title="Pencarian Baru">
+                                <i class="fas fa-sync"></i> Pencarian Baru
                             </a>
                         </div>
                     </div>
@@ -26,7 +26,7 @@
             <div class="col-12">
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Hashtag Statistics</h3>
+                        <h3 class="card-title">Statistik Hashtag</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -43,8 +43,8 @@
                                 <div class="info-box bg-gradient-success">
                                     <span class="info-box-icon"><i class="fas fa-photo-video"></i></span>
                                     <div class="info-box-content">
-                                        <span class="info-box-text">Media Count</span>
-                                        <span class="info-box-number"><?= number_format($mediaCount) ?> posts</span>
+                                        <span class="info-box-text">Jumlah Media</span>
+                                        <span class="info-box-number"><?= number_format($mediaCount) ?> postingan</span>
                                     </div>
                                 </div>
                             </div>
@@ -52,16 +52,16 @@
                                 <div class="info-box bg-gradient-warning">
                                     <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
                                     <div class="info-box-content">
-                                        <span class="info-box-text">Popularity</span>
+                                        <span class="info-box-text">Popularitas</span>
                                         <span class="info-box-number">
                                             <?php if ($mediaCount > 1000000): ?>
-                                                Very High
+                                                Sangat Tinggi
                                             <?php elseif ($mediaCount > 100000): ?>
-                                                High
+                                                Tinggi
                                             <?php elseif ($mediaCount > 10000): ?>
-                                                Medium
+                                                Sedang
                                             <?php else: ?>
-                                                Low
+                                                Rendah
                                             <?php endif; ?>
                                         </span>
                                     </div>
@@ -71,8 +71,8 @@
                                 <div class="info-box bg-gradient-danger">
                                     <span class="info-box-icon"><i class="fas fa-clock"></i></span>
                                     <div class="info-box-content">
-                                        <span class="info-box-text">Last Updated</span>
-                                        <span class="info-box-number"><?= date('M d, Y H:i') ?></span>
+                                        <span class="info-box-text">Terakhir Diperbarui</span>
+                                        <span class="info-box-number"><?= date('d M Y H:i') ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -87,7 +87,7 @@
             <div class="col-12">
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Recent Posts</h3>
+                        <h3 class="card-title">Postingan Terbaru</h3>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($medias)): ?>
@@ -99,7 +99,7 @@
                                                 <!-- Image -->
                                                 <div class="position-relative">
                                                     <img src="<?= esc($media->getImageHighResolutionUrl()) ?>"
-                                                        alt="Instagram Post"
+                                                        alt="Postingan Instagram"
                                                         class="img-fluid w-100"
                                                         style="max-height: 250px; object-fit: cover;">
                                                     
@@ -113,7 +113,7 @@
                                                                 <i class="fas fa-comment"></i> <?= number_format($media->getCommentsCount()) ?>
                                                             </div>
                                                             <div>
-                                                                <i class="fas fa-calendar-alt"></i> <?= $media->getCreatedTime()->format('M d, Y') ?>
+                                                                <i class="fas fa-calendar-alt"></i> <?= $media->getCreatedTime()->format('d M Y') ?>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -126,7 +126,7 @@
                                                             <?= esc(mb_strimwidth($media->getCaption(), 0, 100, '...')) ?>
                                                         </p>
                                                     <?php else: ?>
-                                                        <p class="small text-muted font-italic mb-2">No caption</p>
+                                                        <p class="small text-muted font-italic mb-2">Tidak ada caption</p>
                                                     <?php endif; ?>
                                                     
                                                     <!-- Author -->
@@ -144,13 +144,13 @@
                                                     <div class="mt-3">
                                                         <a href="<?= site_url('serp/instagram/post/' . $media->getShortCode()) ?>"
                                                             class="btn btn-primary btn-sm btn-block rounded-0">
-                                                            <i class="fas fa-search mr-1"></i> View Details
+                                                            <i class="fas fa-search mr-1"></i> Lihat Detail
                                                         </a>
                                                         
                                                         <a href="<?= esc($media->getLink()) ?>"
                                                             target="_blank"
                                                             class="btn btn-outline-secondary btn-sm btn-block rounded-0 mt-2">
-                                                            <i class="fas fa-external-link-alt mr-1"></i> Open on Instagram
+                                                            <i class="fas fa-external-link-alt mr-1"></i> Buka di Instagram
                                                         </a>
                                                     </div>
                                                 </div>
@@ -169,8 +169,8 @@
                             </div>
                         <?php else: ?>
                             <div class="alert alert-info">
-                                <h5><i class="icon fas fa-info"></i> No posts found!</h5>
-                                No recent posts with the hashtag #<?= esc($query) ?> were found.
+                                <h5><i class="icon fas fa-info"></i> Tidak ada postingan ditemukan!</h5>
+                                Tidak ditemukan postingan terbaru dengan hashtag #<?= esc($query) ?>.
                             </div>
                         <?php endif; ?>
                     </div>
@@ -182,7 +182,7 @@
         <div class="row mt-3 mb-4">
             <div class="col-12 text-center">
                 <a href="<?= site_url('serp/instagram') ?>" class="btn btn-default rounded-0">
-                    <i class="fas fa-arrow-left mr-1"></i> Back to Instagram Search
+                    <i class="fas fa-arrow-left mr-1"></i> Kembali ke Pencarian Instagram
                 </a>
             </div>
         </div>

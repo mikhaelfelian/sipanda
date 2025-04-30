@@ -19,14 +19,14 @@
                                 <?php if ($account->isVerified()): ?>
                                     <div class="mt-2">
                                         <span class="badge badge-primary rounded-pill px-3 py-2">
-                                            <i class="fas fa-check-circle mr-1"></i> Verified
+                                            <i class="fas fa-check-circle mr-1"></i> Terverifikasi
                                         </span>
                                     </div>
                                 <?php endif; ?>
                                 
                                 <div class="mt-3">
                                     <a href="https://instagram.com/<?= esc($account->getUsername()) ?>" target="_blank" class="btn btn-outline-primary btn-sm btn-block rounded-0">
-                                        <i class="fas fa-external-link-alt mr-1"></i> Open on Instagram
+                                        <i class="fas fa-external-link-alt mr-1"></i> Buka di Instagram
                                     </a>
                                 </div>
                             </div>
@@ -44,7 +44,7 @@
                                         <div class="info-box bg-light">
                                             <div class="info-box-content text-center">
                                                 <span class="info-box-number"><?= number_format($account->getFollowedByCount()) ?></span>
-                                                <span class="info-box-text">Followers</span>
+                                                <span class="info-box-text">Pengikut</span>
                                             </div>
                                         </div>
                                     </div>
@@ -52,7 +52,7 @@
                                         <div class="info-box bg-light">
                                             <div class="info-box-content text-center">
                                                 <span class="info-box-number"><?= number_format($account->getFollowsCount()) ?></span>
-                                                <span class="info-box-text">Following</span>
+                                                <span class="info-box-text">Mengikuti</span>
                                             </div>
                                         </div>
                                     </div>
@@ -60,7 +60,7 @@
                                         <div class="info-box bg-light">
                                             <div class="info-box-content text-center">
                                                 <span class="info-box-number"><?= number_format($account->getMediaCount()) ?></span>
-                                                <span class="info-box-text">Posts</span>
+                                                <span class="info-box-text">Postingan</span>
                                             </div>
                                         </div>
                                     </div>
@@ -87,9 +87,9 @@
                                 <!-- Additional Info -->
                                 <div class="row mt-3">
                                     <div class="col-md-6">
-                                        <h6 class="font-weight-bold">Account Analytics</h6>
+                                        <h6 class="font-weight-bold">Analisis Akun</h6>
                                         <ul class="list-unstyled">
-                                            <li><i class="fas fa-bullseye text-info mr-2"></i> Engagement Rate: 
+                                            <li><i class="fas fa-bullseye text-info mr-2"></i> Tingkat Keterlibatan: 
                                                 <?php 
                                                     $engagementRate = ($account->getMediaCount() > 0 && $account->getFollowedByCount() > 0) 
                                                         ? round(($account->getMediaCount() / $account->getFollowedByCount()) * 100, 2) 
@@ -97,7 +97,7 @@
                                                     echo $engagementRate . '%';
                                                 ?>
                                             </li>
-                                            <li class="mt-2"><i class="fas fa-chart-bar text-success mr-2"></i> Follower Ratio: 
+                                            <li class="mt-2"><i class="fas fa-chart-bar text-success mr-2"></i> Rasio Pengikut: 
                                                 <?php 
                                                     $followerRatio = ($account->getFollowsCount() > 0) 
                                                         ? round($account->getFollowedByCount() / $account->getFollowsCount(), 2) 
@@ -105,7 +105,7 @@
                                                     echo $followerRatio;
                                                 ?>
                                             </li>
-                                            <li class="mt-2"><i class="fas fa-clock text-warning mr-2"></i> Last Updated: <?= date('M d, Y H:i') ?></li>
+                                            <li class="mt-2"><i class="fas fa-clock text-warning mr-2"></i> Terakhir Diperbarui: <?= date('d M Y H:i') ?></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -121,7 +121,7 @@
             <div class="col-12">
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Recent Posts</h3>
+                        <h3 class="card-title">Postingan Terbaru</h3>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($medias)): ?>
@@ -133,7 +133,7 @@
                                                 <!-- Image -->
                                                 <div class="position-relative">
                                                     <img src="<?= esc($media->getImageHighResolutionUrl()) ?>"
-                                                        alt="Instagram Post"
+                                                        alt="Postingan Instagram"
                                                         class="img-fluid w-100"
                                                         style="max-height: 250px; object-fit: cover;">
                                                     
@@ -147,7 +147,7 @@
                                                                 <i class="fas fa-comment"></i> <?= number_format($media->getCommentsCount()) ?>
                                                             </div>
                                                             <div>
-                                                                <i class="fas fa-calendar-alt"></i> <?= $media->getCreatedTime()->format('M d, Y') ?>
+                                                                <i class="fas fa-calendar-alt"></i> <?= $media->getCreatedTime()->format('d M Y') ?>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -160,20 +160,20 @@
                                                             <?= esc(mb_strimwidth($media->getCaption(), 0, 100, '...')) ?>
                                                         </p>
                                                     <?php else: ?>
-                                                        <p class="small text-muted font-italic mb-2">No caption</p>
+                                                        <p class="small text-muted font-italic mb-2">Tanpa keterangan</p>
                                                     <?php endif; ?>
                                                     
                                                     <!-- Action buttons -->
                                                     <div class="mt-3">
                                                         <a href="<?= site_url('serp/instagram/post/' . $media->getShortCode()) ?>"
                                                             class="btn btn-primary btn-sm btn-block rounded-0">
-                                                            <i class="fas fa-search mr-1"></i> View Details
+                                                            <i class="fas fa-search mr-1"></i> Lihat Detail
                                                         </a>
                                                         
                                                         <a href="<?= esc($media->getLink()) ?>"
                                                             target="_blank"
                                                             class="btn btn-outline-secondary btn-sm btn-block rounded-0 mt-2">
-                                                            <i class="fas fa-external-link-alt mr-1"></i> Open on Instagram
+                                                            <i class="fas fa-external-link-alt mr-1"></i> Buka di Instagram
                                                         </a>
                                                     </div>
                                                 </div>
@@ -192,8 +192,8 @@
                             </div>
                         <?php else: ?>
                             <div class="alert alert-info">
-                                <h5><i class="icon fas fa-info"></i> No posts found!</h5>
-                                No recent posts by this user were found.
+                                <h5><i class="icon fas fa-info"></i> Tidak ada postingan ditemukan!</h5>
+                                Tidak ada postingan terbaru dari pengguna ini.
                             </div>
                         <?php endif; ?>
                     </div>
@@ -205,10 +205,10 @@
         <div class="row mt-3 mb-4">
             <div class="col-12 text-center">
                 <a href="javascript:history.back()" class="btn btn-default rounded-0 mr-2">
-                    <i class="fas fa-arrow-left mr-1"></i> Back to Results
+                    <i class="fas fa-arrow-left mr-1"></i> Kembali ke Hasil
                 </a>
                 <a href="<?= site_url('serp/instagram') ?>" class="btn btn-outline-primary rounded-0">
-                    <i class="fas fa-search mr-1"></i> New Instagram Search
+                    <i class="fas fa-search mr-1"></i> Pencarian Instagram Baru
                 </a>
             </div>
         </div>

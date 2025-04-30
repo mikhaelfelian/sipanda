@@ -8,21 +8,21 @@
                 <!-- Search Form Card -->
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Search Google</h3>
+                        <h3 class="card-title">Pencarian Google</h3>
                     </div>
                     <div class="card-body">
                         <?= form_open('serp/search', ['method' => 'post']) ?>
                             <div class="form-group">
-                                <label for="query">Keyword or Query</label>
+                                <label for="query">Kata Kunci atau Kueri</label>
                                 <input type="text" class="form-control rounded-0" id="query" name="query"
-                                    placeholder="Enter your search query..." required minlength="3" maxlength="255">
+                                    placeholder="Masukkan kata kunci pencarian..." required minlength="3" maxlength="255">
                             </div>
                             <div class="form-group form-check">
                                 <input type="checkbox" class="form-check-input" id="deep_search" name="deep_search"
                                     value="1">
-                                <label class="form-check-label" for="deep_search">Deep Search (Past Year)</label>
+                                <label class="form-check-label" for="deep_search">Pencarian Mendalam (Tahun Terakhir)</label>
                             </div>
-                            <button type="submit" class="btn btn-primary rounded-0">Search</button>
+                            <button type="submit" class="btn btn-primary rounded-0">Cari</button>
                         <?= form_close() ?>
                     </div>
                 </div>
@@ -31,7 +31,7 @@
                 <!-- Recent Searches Card -->
                 <div class="card rounded-0 mb-4">
                     <div class="card-header">
-                        <h3 class="card-title">Recent Searches</h3>
+                        <h3 class="card-title">Pencarian Terbaru</h3>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($recentSearches)): ?>
@@ -45,14 +45,14 @@
                                 <?php endforeach; ?>
                             </ul>
                         <?php else: ?>
-                            <p>No recent searches.</p>
+                            <p>Tidak ada pencarian terbaru.</p>
                         <?php endif; ?>
                     </div>
                 </div>
                 <!-- Popular Keywords Card -->
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Popular Keywords</h3>
+                        <h3 class="card-title">Kata Kunci Populer</h3>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($popularKeywords)): ?>
@@ -65,7 +65,7 @@
                                 <?php endforeach; ?>
                             </ul>
                         <?php else: ?>
-                            <p>No popular keywords.</p>
+                            <p>Tidak ada kata kunci populer.</p>
                         <?php endif; ?>
                     </div>
                 </div>

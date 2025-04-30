@@ -9,14 +9,14 @@
                 <div class="card rounded-0">
                     <div class="card-header">
                         <h3 class="card-title">
-                            <i class="fas fa-search mr-2"></i>Maps Search Results for "<?= esc($query) ?>"
+                            <i class="fas fa-search mr-2"></i>Hasil Pencarian Maps untuk "<?= esc($query) ?>"
                             <?php if ($location && $location !== 'Indonesia'): ?>
-                                in <?= esc($location) ?>
+                                di <?= esc($location) ?>
                             <?php endif; ?>
                         </h3>
                         <div class="card-tools">
-                            <a href="<?= site_url('serp/maps') ?>" class="btn btn-tool" title="New Search">
-                                <i class="fas fa-sync"></i> New Search
+                            <a href="<?= site_url('serp/maps') ?>" class="btn btn-tool" title="Pencarian Baru">
+                                <i class="fas fa-sync"></i> Pencarian Baru
                             </a>
                         </div>
                     </div>
@@ -30,7 +30,7 @@
             <div class="col-md-8">
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Map View</h3>
+                        <h3 class="card-title">Tampilan Peta</h3>
                     </div>
                     <div class="card-body p-0">
                         <!-- If we have a map in the results, display it -->
@@ -59,12 +59,12 @@
                                                     lng: <?= $result['gps_coordinates']['longitude'] ?> 
                                                 },
                                                 map: map,
-                                                title: "<?= esc($result['title'] ?? 'Location') ?>"
+                                                title: "<?= esc($result['title'] ?? 'Lokasi') ?>"
                                             });
 
                                             const infowindow<?= $index ?> = new google.maps.InfoWindow({
                                                 content: `<div class="info-window">
-                                                    <h5><?= esc($result['title'] ?? 'Location') ?></h5>
+                                                    <h5><?= esc($result['title'] ?? 'Lokasi') ?></h5>
                                                     <p><?= esc($result['address'] ?? '') ?></p>
                                                     <?php if (isset($result['rating'])): ?>
                                                         <p>Rating: <?= $result['rating'] ?>/5</p>
@@ -89,7 +89,7 @@
                             <div class="text-center bg-light" style="height: 500px; display: flex; align-items: center; justify-content: center;">
                                 <div>
                                     <i class="fas fa-map-marked-alt fa-5x text-muted mb-3"></i>
-                                    <p class="text-muted">No map data available</p>
+                                    <p class="text-muted">Tidak ada data peta tersedia</p>
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -102,7 +102,7 @@
                 <div class="card rounded-0">
                     <div class="card-header">
                         <h3 class="card-title">
-                            <?= count($mapResults) ?> Result<?= count($mapResults) != 1 ? 's' : '' ?> Found
+                            <?= count($mapResults) ?> Hasil Ditemukan
                         </h3>
                     </div>
                     <div class="card-body p-0">
@@ -111,7 +111,7 @@
                                 <?php foreach ($mapResults as $index => $result): ?>
                                     <div class="list-group-item list-group-item-action flex-column align-items-start">
                                         <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1"><?= esc($result['title'] ?? 'Unknown') ?></h5>
+                                            <h5 class="mb-1"><?= esc($result['title'] ?? 'Tidak Diketahui') ?></h5>
                                             <?php if (isset($result['rating'])): ?>
                                                 <small class="text-muted">
                                                     <?= $result['rating'] ?>
@@ -154,7 +154,7 @@
                             </div>
                         <?php else: ?>
                             <div class="alert alert-info m-3">
-                                No results found. Try a different search term or location.
+                                Tidak ada hasil ditemukan. Coba kata kunci atau lokasi yang berbeda.
                             </div>
                         <?php endif; ?>
                     </div>
