@@ -13,9 +13,9 @@ class ChatGPTService
     }
 
     /**
-     * Set API key manually if not set via environment
+     * Mengatur API key secara manual jika tidak diatur melalui environment
      * 
-     * @param string $apiKey OpenAI API key
+     * @param string $apiKey Kunci API OpenAI
      * @return void
      */
     public function setApiKey($apiKey)
@@ -24,13 +24,13 @@ class ChatGPTService
     }
 
     /**
-     * Ask a question to ChatGPT
+     * Mengajukan pertanyaan ke ChatGPT
      * 
-     * @param string $prompt The user's question or prompt
-     * @param string $model The model to use (default: gpt-3.5-turbo)
-     * @param float $temperature Temperature setting (0-1)
-     * @param int $maxTokens Maximum tokens to generate
-     * @return string The response from ChatGPT
+     * @param string $prompt Pertanyaan atau prompt dari pengguna
+     * @param string $model Model yang digunakan (default: gpt-3.5-turbo)
+     * @param float $temperature Pengaturan temperature (0-1)
+     * @param int $maxTokens Jumlah maksimum token yang dihasilkan
+     * @return string Respons dari ChatGPT
      */
     public function ask($prompt, $model = 'gpt-3.5-turbo', $temperature = 0.7, $maxTokens = 1000)
     {
@@ -47,14 +47,14 @@ class ChatGPTService
     }
 
     /**
-     * Ask with system instruction
+     * Mengajukan pertanyaan dengan instruksi sistem
      * 
-     * @param string $prompt The user's question or prompt
-     * @param string $systemInstruction System instruction to guide the model
-     * @param string $model The model to use
-     * @param float $temperature Temperature setting (0-1)
-     * @param int $maxTokens Maximum tokens to generate
-     * @return string The response from ChatGPT
+     * @param string $prompt Pertanyaan atau prompt dari pengguna
+     * @param string $systemInstruction Instruksi sistem untuk mengarahkan model
+     * @param string $model Model yang digunakan
+     * @param float $temperature Pengaturan temperature (0-1)
+     * @param int $maxTokens Jumlah maksimum token yang dihasilkan
+     * @return string Respons dari ChatGPT
      */
     public function askWithSystemInstruction($prompt, $systemInstruction, $model = 'gpt-3.5-turbo', $temperature = 0.7, $maxTokens = 1000)
     {
@@ -72,13 +72,13 @@ class ChatGPTService
     }
     
     /**
-     * Continue a conversation with ChatGPT
+     * Melanjutkan percakapan dengan ChatGPT
      * 
-     * @param array $messages Array of previous messages
-     * @param string $model The model to use
-     * @param float $temperature Temperature setting (0-1)
-     * @param int $maxTokens Maximum tokens to generate
-     * @return string The response from ChatGPT
+     * @param array $messages Array pesan-pesan sebelumnya
+     * @param string $model Model yang digunakan
+     * @param float $temperature Pengaturan temperature (0-1)
+     * @param int $maxTokens Jumlah maksimum token yang dihasilkan
+     * @return string Respons dari ChatGPT
      */
     public function conversation($messages, $model = 'gpt-3.5-turbo', $temperature = 0.7, $maxTokens = 1000)
     {
@@ -93,10 +93,10 @@ class ChatGPTService
     }
 
     /**
-     * Make the API request to OpenAI
+     * Membuat permintaan API ke OpenAI
      * 
-     * @param array $data The request data
-     * @return string|array The response content or error message
+     * @param array $data Data permintaan
+     * @return string|array Konten respons atau pesan kesalahan
      */
     protected function makeRequest($data)
     {
