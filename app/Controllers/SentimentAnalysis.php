@@ -126,7 +126,7 @@ class SentimentAnalysis extends BaseController
         }
         
         return [
-            'sentiment' => $sentiment,
+            'sentiment'     => $sentiment,
             'positiveScore' => $positiveScore,
             'negativeScore' => $negativeScore,
             'positiveWords' => $foundPositiveWords,
