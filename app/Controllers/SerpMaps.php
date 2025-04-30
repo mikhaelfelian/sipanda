@@ -42,7 +42,8 @@ class SerpMaps extends BaseController
             'isMenuActive'    => isMenuActive('serp/maps') ? 'active' : '',
             'mapResults'      => [],
             'recentSearches'  => $recentSearches,
-            'popularKeywords' => $popularKeywords
+            'popularKeywords' => $popularKeywords,
+            'googleMapsKey'   => config('GoogleMaps')->apiKey
         ];
 
         return view($this->theme->getThemePath() . '/serp/maps', $data);
