@@ -23,6 +23,9 @@ $routes->get('/dashboard', 'Dashboard::index', ['namespace' => 'App\Controllers'
 $routes->group('', ['filter' => 'auth'], function ($routes) {
     // ChatGPT routes
     $routes->post('chatgpt/send', 'ChatGPT::send', ['filter' => 'cors']);
+    $routes->post('chatgpt/ask', 'ChatGPT::ask', ['filter' => 'cors']);
+    $routes->post('chatgpt/ask-with-system', 'ChatGPT::askWithSystem', ['filter' => 'cors']);
+    $routes->post('chatgpt/conversation', 'ChatGPT::conversation', ['filter' => 'cors']);
 
 });
 
