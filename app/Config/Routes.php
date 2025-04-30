@@ -29,7 +29,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
 // SERP routes
 $routes->group('serp', function ($routes) {
-    $routes->get('/', 'Serp::index');
+    $routes->get('google', 'Serp::index');
     $routes->match(['get', 'post'], 'search', 'Serp::search');
     $routes->get('searchGoogle', 'Serp::searchGoogle');
     $routes->get('searchYoutube', 'Serp::searchYoutube');
