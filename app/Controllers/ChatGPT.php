@@ -12,20 +12,20 @@ class ChatGPT extends Controller
 
     public function __construct()
     {
-        // Force close any active sessions
+        // Paksa tutup semua sesi yang aktif
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_write_close();
         }
         
-        // Prevent new sessions from starting
+        // Cegah sesi baru dimulai
         ini_set('session.use_cookies', '0');
         ini_set('session.use_only_cookies', '0');
         ini_set('session.use_trans_sid', '0');
         
-        // Initialize ChatGPTService
+        // Inisialisasi ChatGPTService
         $this->chatGPTService = new ChatGPTService();
         
-        // Set API key manually if not using environment variable
+        // Atur API key secara manual jika tidak menggunakan variabel lingkungan
         if (!empty($this->apiKey)) {
             $this->chatGPTService->setApiKey($this->apiKey);
         }
@@ -104,7 +104,7 @@ class ChatGPT extends Controller
     }
     
     /**
-     * Use the new ChatGPTService to ask a question without system instruction
+     * Pakai ChatGPTService baru untuk nanya tanpa instruksi sistem
      */
     public function ask()
     {
@@ -147,7 +147,7 @@ class ChatGPT extends Controller
     }
     
     /**
-     * Use the new ChatGPTService with a system instruction
+     * Pakai ChatGPTService baru dengan instruksi sistem
      */
     public function askWithSystem()
     {
@@ -191,7 +191,7 @@ class ChatGPT extends Controller
     }
     
     /**
-     * Use the new ChatGPTService for a conversation with multiple messages
+     * Pakai ChatGPTService baru buat ngobrol dengan beberapa pesan
      */
     public function conversation()
     {
