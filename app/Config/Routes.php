@@ -47,6 +47,10 @@ $routes->group('serp', function ($routes) {
     $routes->post('instagram/hashtags', 'SerpInstagram::searchHashtags');
     $routes->get('instagram/profile/(:segment)', 'SerpInstagram::viewProfile/$1');
     $routes->get('instagram/post/(:segment)', 'SerpInstagram::viewPost/$1');
+    
+    // Sentiment Analysis routes
+    $routes->get('sentiment', 'SentimentAnalysis::index');
+    $routes->post('sentiment/analyze', 'SentimentAnalysis::analyze');
 });
 
 // Words routes (using GET method)
@@ -58,4 +62,12 @@ $routes->group('words', function ($routes) {
     $routes->get('positive', 'Words::viewPositive');
     $routes->get('negative', 'Words::viewNegative');
     $routes->get('category', 'Words::viewByCategory');
+    $routes->get('analyze', 'Words::analyze');
+});
+
+// PHPInsights Demo routes
+$routes->group('insights', function ($routes) {
+    $routes->get('/', 'InsightsDemo::index');
+    $routes->get('api/analyze', 'InsightsDemo::apiAnalyze');
+    $routes->get('api/compare', 'InsightsDemo::apiCompare');
 });
