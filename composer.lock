@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e7eef99920025005018bbd442cef659e",
+    "content-hash": "e37958a534adda5ad05e1a9783ffb7ca",
     "packages": [
         {
             "name": "benedmunds/codeigniter-ion-auth",
@@ -184,6 +184,51 @@
                 "source": "https://github.com/google/recaptcha"
             },
             "time": "2023-02-18T17:41:46+00:00"
+        },
+        {
+            "name": "jwhennessey/phpinsight",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/JWHennessey/phpInsight.git",
+                "reference": "f7c5e79e1f9f5c9f055a202a18939453f0dfce1d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/JWHennessey/phpInsight/zipball/f7c5e79e1f9f5c9f055a202a18939453f0dfce1d",
+                "reference": "f7c5e79e1f9f5c9f055a202a18939453f0dfce1d",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "PHPInsight": "lib/"
+                }
+            },
+            "license": [
+                "GPLv3 or later"
+            ],
+            "authors": [
+                {
+                    "name": "James Hennessey"
+                }
+            ],
+            "description": "Sentiment analysis tool for PHP",
+            "homepage": "https://github.com/JWHennessey/phpInsight",
+            "keywords": [
+                "insight",
+                "phpinsight",
+                "sentiment"
+            ],
+            "support": {
+                "source": "https://github.com/JWHennessey/phpInsight/tree/master",
+                "issues": "https://github.com/JWHennessey/phpInsight/issues"
+            },
+            "time": "2018-09-12T15:22:16+00:00"
         },
         {
             "name": "laminas/laminas-escaper",
@@ -1176,6 +1221,77 @@
                 "source": "http://github.com/sooluh/codeigniter4-recaptcha"
             },
             "time": "2023-08-31T01:37:04+00:00"
+        },
+        {
+            "name": "tecnickcom/tcpdf",
+            "version": "6.9.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tecnickcom/TCPDF.git",
+                "reference": "d0e8dd17f8a1df3c97b94b9af8356e88e811ed59"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/d0e8dd17f8a1df3c97b94b9af8356e88e811ed59",
+                "reference": "d0e8dd17f8a1df3c97b94b9af8356e88e811ed59",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": ">=7.1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "config",
+                    "include",
+                    "tcpdf.php",
+                    "tcpdf_barcodes_1d.php",
+                    "tcpdf_barcodes_2d.php",
+                    "include/tcpdf_colors.php",
+                    "include/tcpdf_filters.php",
+                    "include/tcpdf_font_data.php",
+                    "include/tcpdf_fonts.php",
+                    "include/tcpdf_images.php",
+                    "include/tcpdf_static.php",
+                    "include/barcodes/datamatrix.php",
+                    "include/barcodes/pdf417.php",
+                    "include/barcodes/qrcode.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Nicola Asuni",
+                    "email": "info@tecnick.com",
+                    "role": "lead"
+                }
+            ],
+            "description": "TCPDF is a PHP class for generating PDF documents and barcodes.",
+            "homepage": "http://www.tcpdf.org/",
+            "keywords": [
+                "PDFD32000-2008",
+                "TCPDF",
+                "barcodes",
+                "datamatrix",
+                "pdf",
+                "pdf417",
+                "qrcode"
+            ],
+            "support": {
+                "issues": "https://github.com/tecnickcom/TCPDF/issues",
+                "source": "https://github.com/tecnickcom/TCPDF/tree/6.9.3"
+            },
+            "funding": [
+                {
+                    "url": "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&currency_code=GBP&business=paypal@tecnick.com&item_name=donation%20for%20tcpdf%20project",
+                    "type": "custom"
+                }
+            ],
+            "time": "2025-04-20T15:52:50+00:00"
         }
     ],
     "packages-dev": [
@@ -3042,7 +3158,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "benedmunds/codeigniter-ion-auth": 20
+        "benedmunds/codeigniter-ion-auth": 20,
+        "jwhennessey/phpinsight": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
