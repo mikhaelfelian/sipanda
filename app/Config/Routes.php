@@ -48,3 +48,14 @@ $routes->group('serp', function ($routes) {
     $routes->get('instagram/profile/(:segment)', 'SerpInstagram::viewProfile/$1');
     $routes->get('instagram/post/(:segment)', 'SerpInstagram::viewPost/$1');
 });
+
+// Words routes (using GET method)
+$routes->group('words', function ($routes) {
+    $routes->get('/', 'Words::index');
+    $routes->get('add', 'Words::add');
+    $routes->get('edit/(:num)', 'Words::edit/$1');
+    $routes->get('delete/(:num)', 'Words::delete/$1');
+    $routes->get('positive', 'Words::viewPositive');
+    $routes->get('negative', 'Words::viewNegative');
+    $routes->get('category', 'Words::viewByCategory');
+});
