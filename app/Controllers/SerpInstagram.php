@@ -66,6 +66,13 @@ class SerpInstagram extends BaseController
         $userId = $this->ionAuth->user()->row()->id;
         $recentSearches = $this->keywordModel->getUserHistory($userId, 5);
         $popularKeywords = $this->keywordModel->getPopularKeywords(5);
+        
+        // Get trending searches from Google Trends with debug info
+        $serpApi = new \App\Libraries\SerpApi();
+        $serpApi->setApiKey(config('Serp')->apiKey);
+        log_message('info', 'Instagram Controller: Fetching trending searches');
+        $trendingSearches = $serpApi->getTrendingSearches('ID', 10);
+        log_message('info', 'Instagram Controller: Received ' . count($trendingSearches) . ' trending searches');
 
         $data = [
             'title'           => 'Instagram Search',
@@ -73,7 +80,8 @@ class SerpInstagram extends BaseController
             'user'            => $this->ionAuth->user()->row(),
             'isMenuActive'    => isMenuActive('serp/instagram') ? 'active' : '',
             'recentSearches'  => $recentSearches,
-            'popularKeywords' => $popularKeywords
+            'popularKeywords' => $popularKeywords,
+            'trendingSearches' => $trendingSearches
         ];
 
         return view($this->theme->getThemePath() . '/serp/instagram', $data);

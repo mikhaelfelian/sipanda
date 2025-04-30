@@ -85,14 +85,50 @@
                     <div class="card-body">
                         <div class="suggestion-keywords">
                             <?php 
-                            $suggestionKeywords = [
-                                'berita terkini', 'hoax', 'radikalisme', 'terorisme', 
-                                'keamanan siber', 'keamanan nasional', 'pemilu', 
-                                'demonstrasi', 'konflik sosial', 'bencana alam'
-                            ];
-                            
-                            if (!empty($suggestionKeywords)): 
+                            // Using dynamic trending searches from Google Trends API instead of static suggestions
+                            if (!empty($trendingSearches)): 
+                                // Add debug info for development purposes
+                                if (ENVIRONMENT === 'development'): 
                             ?>
+                                <div class="small text-muted mb-2">
+                                    Found <?= count($trendingSearches) ?> trending items
+                                </div>
+                                <?php endif; ?>
+
+                                <div class="d-flex flex-wrap mb-3">
+                                    <?php foreach ($trendingSearches as $trend): ?>
+                                        <a href="<?= site_url('serp/result?q=' . urlencode(is_array($trend) ? $trend['title'] : $trend)) ?>" 
+                                           class="badge badge-primary p-2 mr-2 mb-2">
+                                            <?= esc(is_array($trend) ? $trend['title'] : $trend) ?>
+                                        </a>
+                                        
+                                        <?php 
+                                        $relatedQueries = [];
+                                        if (is_array($trend) && isset($trend['related_queries']) && !empty($trend['related_queries'])): 
+                                            $relatedQueries = $trend['related_queries'];
+                                        endif;
+                                        
+                                        if (!empty($relatedQueries)): 
+                                            foreach ($relatedQueries as $related): 
+                                        ?>
+                                            <a class="badge badge-secondary p-2 mr-2 mb-2" href="<?= site_url('serp/result?q=' . urlencode($related)) ?>">
+                                                <?= esc($related) ?>
+                                            </a>
+                                        <?php 
+                                            endforeach;
+                                        endif; 
+                                        ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <?php 
+                                // Fallback to static suggestions if trending searches are not available
+                                $suggestionKeywords = [
+                                    'berita terkini', 'hoax', 'radikalisme', 'terorisme', 
+                                    'keamanan siber', 'keamanan nasional', 'pemilu', 
+                                    'demonstrasi', 'konflik sosial', 'bencana alam'
+                                ];
+                                ?>
                                 <div class="d-flex flex-wrap">
                                     <?php foreach ($suggestionKeywords as $keyword): ?>
                                         <a href="<?= site_url('serp/result?q=' . urlencode($keyword)) ?>" 
@@ -101,8 +137,6 @@
                                         </a>
                                     <?php endforeach; ?>
                                 </div>
-                            <?php else: ?>
-                                <p>Tidak ada saran kata kunci.</p>
                             <?php endif; ?>
                         </div>
                     </div>

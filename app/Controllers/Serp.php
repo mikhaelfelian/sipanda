@@ -29,6 +29,12 @@ class Serp extends BaseController
         $userId = $this->ionAuth->user()->row()->id;
         $recentSearches = $this->keywordModel->getUserHistory($userId, 5);
         $popularKeywords = $this->keywordModel->getPopularKeywords(5);
+        
+        // Get trending searches from Google Trends with debug info
+        $this->serpApi->setApiKey(config('Serp')->apiKey);
+        log_message('info', 'Serp Controller: Fetching trending searches');
+        $trendingSearches = $this->serpApi->getTrendingSearches('ID', 10);
+        log_message('info', 'Serp Controller: Received ' . count($trendingSearches) . ' trending searches');
 
         $data = [
             'title'           => 'Google Search Analysis',
@@ -37,7 +43,8 @@ class Serp extends BaseController
             'isMenuActive'    => isMenuActive('serp') ? 'active' : '',
             'searchResults'   => [],
             'recentSearches'  => $recentSearches,
-            'popularKeywords' => $popularKeywords
+            'popularKeywords' => $popularKeywords,
+            'trendingSearches' => $trendingSearches
         ];
 
         return view($this->theme->getThemePath() . '/serp/index', $data);
@@ -893,5 +900,151 @@ class Serp extends BaseController
                 'message' => 'Kesalahan pembuatan laporan teks: ' . $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Debug Google Trends API with plaintext output (only in development environment)
+     */
+    public function debugTrendsText()
+    {
+        // Only allow in development environment
+        if (ENVIRONMENT !== 'development') {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        
+        // Get API key and debug info
+        $apiKey = config('Serp')->apiKey;
+        $url = 'https://serpapi.com/search.json?engine=google_trends&api_key=' . $apiKey . '&geo=ID&hl=id';
+        
+        // Build debug output
+        $output = "==== GOOGLE TRENDS DEBUG ====\n";
+        $output .= "API Key: ***" . substr($apiKey, -4) . "\n";
+        $output .= "URL: " . $url . "\n";
+        $output .= "Environment: " . ENVIRONMENT . "\n";
+        $output .= "Timestamp: " . date('Y-m-d H:i:s') . "\n\n";
+        
+        // Make direct API request using cURL
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $output .= "HTTP Code: " . $httpCode . "\n";
+        
+        if(curl_errno($ch)) {
+            $output .= "cURL Error: " . curl_error($ch) . "\n";
+        }
+        
+        curl_close($ch);
+        
+        // Process response
+        $data = json_decode($response, true);
+        $jsonError = json_last_error_msg();
+        
+        $output .= "JSON Error: " . $jsonError . "\n";
+        
+        if ($data) {
+            $output .= "Data Keys: " . implode(', ', array_keys($data)) . "\n\n";
+            
+            // Check for trending searches
+            if (isset($data['trending_searches'])) {
+                $output .= "Found " . count($data['trending_searches']) . " trending searches\n";
+                
+                // Show the first few trends
+                $output .= "Sample trends:\n";
+                for ($i = 0; $i < min(5, count($data['trending_searches'])); $i++) {
+                    $trend = $data['trending_searches'][$i];
+                    $output .= ($i+1) . ". " . ($trend['title'] ?? 'No title') . "\n";
+                    
+                    // Check for related queries
+                    if (isset($trend['related_queries']) && is_array($trend['related_queries'])) {
+                        $output .= "   Related queries: " . implode(', ', array_slice($trend['related_queries'], 0, 3)) . "...\n";
+                    } else {
+                        $output .= "   No related queries found\n";
+                    }
+                }
+            } else {
+                $output .= "No trending_searches found in API response\n";
+            }
+        } else {
+            $output .= "Failed to parse response as JSON\n";
+        }
+        
+        // Testing implementation
+        $output .= "\n==== IMPLEMENTATION TEST ====\n";
+        $this->serpApi->setApiKey($apiKey);
+        $trendingSearches = $this->serpApi->getTrendingSearches('ID', 10);
+        $output .= "Implementation returned " . count($trendingSearches) . " trends\n";
+        
+        if (!empty($trendingSearches)) {
+            $output .= "Sample implementation results:\n";
+            for ($i = 0; $i < min(5, count($trendingSearches)); $i++) {
+                $trend = $trendingSearches[$i];
+                $title = is_array($trend) ? ($trend['title'] ?? 'No title') : $trend;
+                $output .= ($i+1) . ". " . $title . "\n";
+                
+                // Check for related queries
+                if (is_array($trend) && isset($trend['related_queries']) && is_array($trend['related_queries'])) {
+                    $output .= "   Related queries: " . implode(', ', array_slice($trend['related_queries'], 0, 3)) . "...\n";
+                }
+            }
+        }
+        
+        // Return as plain text
+        return $this->response->setHeader('Content-Type', 'text/plain')->setBody($output);
+    }
+    
+    /**
+     * Get fallback trend data for display
+     */
+    public function fallbackTrends()
+    {
+        $fallbackTrends = [
+            [
+                'title' => 'hari buruh',
+                'related_queries' => ['hari buruh internasional', 'hari buruh 2025', 'hari buruh nasional', 'apa itu hari buruh']
+            ],
+            [
+                'title' => 'may day',
+                'related_queries' => ['hari buruh internasional', 'hari buruh 2025', 'hari buruh nasional', 'tanggal 1 mei libur']
+            ],
+            [
+                'title' => '1 mei',
+                'related_queries' => ['memperingati hari apa', 'hari apa', 'tanggal 1 mei 2025 apakah libur']
+            ],
+            [
+                'title' => 'tanggal merah',
+                'related_queries' => ['besok tanggal merah', 'apakah besok tanggal merah', 'hari buruh 2025']
+            ],
+            [
+                'title' => 'labour day',
+                'related_queries' => ['hari buruh internasional', 'may day', '1 mei memperingati hari apa']
+            ],
+            [
+                'title' => 'pemilu',
+                'related_queries' => ['pemilu 2024', 'hasil pemilu', 'jadwal pemilu 2024']
+            ],
+            [
+                'title' => 'pilpres',
+                'related_queries' => ['hasil pilpres', 'pilpres 2024', 'calon pilpres 2024']
+            ],
+            [
+                'title' => 'COVID-19',
+                'related_queries' => ['vaksin covid', 'gejala covid', 'covid di indonesia']
+            ],
+            [
+                'title' => 'harga sembako',
+                'related_queries' => ['daftar harga sembako', 'harga beras', 'kenaikan harga sembako']
+            ],
+            [
+                'title' => 'banjir',
+                'related_queries' => ['banjir jakarta', 'penyebab banjir', 'cara mengatasi banjir']
+            ]
+        ];
+        
+        return $this->response->setJSON($fallbackTrends);
     }
 } 

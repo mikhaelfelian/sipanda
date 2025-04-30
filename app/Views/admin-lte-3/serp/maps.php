@@ -15,12 +15,14 @@
                             <div class="form-group">
                                 <label for="query">Apa yang Anda cari?</label>
                                 <input type="text" class="form-control rounded-0" id="query" name="query"
-                                    placeholder="Masukkan bisnis, alamat, atau tempat..." required minlength="3" maxlength="255">
+                                    placeholder="Masukkan bisnis, alamat, atau tempat..." required minlength="3" maxlength="255"
+                                    value="<?= set_value('query', $this->request->getGet('query') ?? '') ?>">
                             </div>
                             <div class="form-group">
                                 <label for="location">Lokasi</label>
                                 <input type="text" class="form-control rounded-0" id="location" name="location"
-                                    placeholder="Kota, wilayah, atau alamat (default: Indonesia)">
+                                    placeholder="Kota, wilayah, atau alamat (default: Indonesia)"
+                                    value="<?= set_value('location', $this->request->getGet('location') ?? '') ?>">
                                 <small class="form-text text-muted">Biarkan kosong untuk mencari di seluruh Indonesia</small>
                             </div>
                             <button type="submit" class="btn btn-primary rounded-0">Cari di Maps</button>
@@ -81,6 +83,52 @@
                             </ul>
                         <?php else: ?>
                             <p>Tidak ada kata kunci populer.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <!-- Trending Searches Card -->
+                <div class="card rounded-0 mt-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Trending di Google</h3>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($trendingSearches)): ?>
+                            <?php if (ENVIRONMENT === 'development'): ?>
+                            <div class="small text-muted mb-2">
+                                Found <?= count($trendingSearches) ?> trending items
+                            </div>
+                            <?php endif; ?>
+                            
+                            <div class="d-flex flex-wrap">
+                                <?php foreach ($trendingSearches as $trend): ?>
+                                    <div class="dropdown mr-2 mb-2">
+                                        <a href="<?= site_url('serp/maps/search?query=' . urlencode(is_array($trend) ? $trend['title'] : $trend)) ?>" 
+                                           class="badge badge-info p-2 dropdown-toggle" id="trend-<?= md5(is_array($trend) ? $trend['title'] : $trend) ?>"
+                                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <?= esc(is_array($trend) ? $trend['title'] : $trend) ?>
+                                        </a>
+                                        <?php 
+                                        $relatedQueries = [];
+                                        if (is_array($trend) && isset($trend['related_queries']) && !empty($trend['related_queries'])): 
+                                            $relatedQueries = $trend['related_queries'];
+                                        endif;
+                                        
+                                        if (!empty($relatedQueries)): 
+                                        ?>
+                                        <div class="dropdown-menu p-2" aria-labelledby="trend-<?= md5(is_array($trend) ? $trend['title'] : $trend) ?>">
+                                            <h6 class="dropdown-header bg-light">Trend Breakdown</h6>
+                                            <?php foreach ($relatedQueries as $related): ?>
+                                            <a class="dropdown-item py-1" href="<?= site_url('serp/maps/search?query=' . urlencode($related)) ?>">
+                                                <?= esc($related) ?>
+                                            </a>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <p>Tidak ada trending search tersedia saat ini.</p>
                         <?php endif; ?>
                     </div>
                 </div>

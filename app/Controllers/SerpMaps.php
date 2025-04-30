@@ -34,6 +34,12 @@ class SerpMaps extends BaseController
         $userId = $this->ionAuth->user()->row()->id;
         $recentSearches = $this->keywordModel->getUserHistory($userId, 5);
         $popularKeywords = $this->keywordModel->getPopularKeywords(5);
+        
+        // Get trending searches from Google Trends with debug info
+        $this->serpApi->setApiKey(config('Serp')->apiKey);
+        log_message('info', 'Maps Controller: Fetching trending searches');
+        $trendingSearches = $this->serpApi->getTrendingSearches('ID', 10);
+        log_message('info', 'Maps Controller: Received ' . count($trendingSearches) . ' trending searches');
 
         $data = [
             'title'           => 'Google Maps Search',
@@ -43,6 +49,7 @@ class SerpMaps extends BaseController
             'mapResults'      => [],
             'recentSearches'  => $recentSearches,
             'popularKeywords' => $popularKeywords,
+            'trendingSearches' => $trendingSearches,
             'googleMapsKey'   => config('GoogleMaps')->apiKey
         ];
 
@@ -54,18 +61,14 @@ class SerpMaps extends BaseController
      */
     public function search()
     {
+        // Get query from POST or GET
+        $query = $this->request->getPost('query') ?? $this->request->getGet('query');
+        $location = $this->request->getPost('location') ?? $this->request->getGet('location') ?? 'Indonesia';
+        
         // Validate input
-        $rules = [
-            'query' => 'required|min_length[3]|max_length[255]',
-            'location' => 'permit_empty|max_length[255]'
-        ];
-
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        if (empty($query) || strlen($query) < 3) {
+            return redirect()->back()->withInput()->with('errors', ['query' => 'Kata kunci pencarian diperlukan (minimal 3 karakter)']);
         }
-
-        $query = $this->request->getPost('query');
-        $location = $this->request->getPost('location') ?: 'Indonesia';
 
         // Check if keyword exists
         $existing = $this->keywordModel->where('keyword', $query)->first();

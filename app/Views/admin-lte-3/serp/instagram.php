@@ -191,6 +191,53 @@
                     </div>
                 </div>
                 
+                <!-- Trending Searches Card -->
+                <div class="card rounded-0 mt-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Trending di Google</h3>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($trendingSearches)): ?>
+                            <?php if (ENVIRONMENT === 'development'): ?>
+                            <div class="small text-muted mb-2">
+                                Found <?= count($trendingSearches) ?> trending items
+                            </div>
+                            <?php endif; ?>
+                        
+                            <div class="d-flex flex-wrap">
+                                <?php foreach ($trendingSearches as $trend): ?>
+                                    <div class="dropdown mr-2 mb-2">
+                                        <a href="#" onclick="setSearchQuery('<?= esc(is_array($trend) ? $trend['title'] : $trend) ?>')" 
+                                           class="badge badge-info p-2 dropdown-toggle" id="trend-<?= md5(is_array($trend) ? $trend['title'] : $trend) ?>"
+                                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <?= esc(is_array($trend) ? $trend['title'] : $trend) ?>
+                                        </a>
+                                        <?php 
+                                        $relatedQueries = [];
+                                        if (is_array($trend) && isset($trend['related_queries']) && !empty($trend['related_queries'])): 
+                                            $relatedQueries = $trend['related_queries'];
+                                        endif;
+                                        
+                                        if (!empty($relatedQueries)): 
+                                        ?>
+                                        <div class="dropdown-menu p-2" aria-labelledby="trend-<?= md5(is_array($trend) ? $trend['title'] : $trend) ?>">
+                                            <h6 class="dropdown-header bg-light">Trend Breakdown</h6>
+                                            <?php foreach ($relatedQueries as $related): ?>
+                                            <a class="dropdown-item py-1" href="#" onclick="setSearchQuery('<?= esc($related) ?>'); return false;">
+                                                <?= esc($related) ?>
+                                            </a>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <p>Tidak ada trending search tersedia saat ini.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
                 <!-- Instagram Tips Card -->
                 <div class="card rounded-0 mt-4">
                     <div class="card-header">
@@ -209,4 +256,22 @@
         </div>
     </div>
 </section>
-<?= $this->endSection() ?> 
+<?= $this->endSection() ?>
+
+<script>
+function setSearchQuery(keyword) {
+    // Set the active tab to profile search by default
+    $('#profile-tab').tab('show');
+    
+    // Set the value in profile search input
+    $('#profile-query').val(keyword);
+    
+    // Also set in hashtag search input without the hashtag symbol
+    $('#hashtag-query').val(keyword.replace('#', ''));
+    
+    // Scroll to the search form
+    $('html, body').animate({
+        scrollTop: $("#instagram-search-tabs").offset().top - 100
+    }, 500);
+}
+</script> 
