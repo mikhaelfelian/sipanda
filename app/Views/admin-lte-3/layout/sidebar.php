@@ -32,8 +32,8 @@
                 </li>
 
                 <!-- Analyzed data -->
-                <li class="nav-item has-treeview <?= isMenuActive(['master', 'satuan']) ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= isMenuActive(['master', 'satuan']) ? 'active' : '' ?>">
+                <li class="nav-item has-treeview <?= isMenuActive(['serp', 'google', 'instagram', 'maps']) ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= isMenuActive(['serp', 'google', 'instagram', 'maps']) ? 'active' : '' ?>">
                         <i class="nav-icon fas fa-database"></i>
                         <p>
                             Modul Analisis Data
@@ -42,8 +42,8 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="<?= base_url('serp') ?>"
-                                class="nav-link <?= isMenuActive('serp') && !isMenuActive('serp/instagram') ? 'active' : '' ?>">
+                            <a href="<?= base_url('serp/google') ?>"
+                                class="nav-link <?= isMenuActive('serp/google') ? 'active' : '' ?>">
                                 <?= nbs(3) ?>
                                 <i class="fas fa-search nav-icon"></i>
                                 <p>Google Analysis</p>
