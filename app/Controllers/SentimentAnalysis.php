@@ -210,7 +210,7 @@ class SentimentAnalysis extends BaseController
         $status = ($type === 'positive') ? 1 : 2;
         
         // Ambil kata-kata dari database berdasarkan status
-        $words = $wordModel->where('status', $status)->findAll();
+        $words = $wordModel->where('status_word', $status)->findAll();
         
         // Jika tidak ada kata yang ditemukan, gunakan kata sampel untuk demo
         if (empty($words)) {

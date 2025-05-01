@@ -32,8 +32,8 @@
                 </li>
 
                 <!-- Analyzed data -->
-                <li class="nav-item has-treeview <?= isMenuActive(['serp', 'google', 'instagram', 'maps', 'sentimentanalysis']) ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= isMenuActive(['serp', 'google', 'instagram', 'maps', 'sentimentanalysis']) ? 'active' : '' ?>">
+                <li class="nav-item has-treeview <?= isMenuActive(['serp', 'google', 'instagram', 'maps', 'sentimentanalysis', 'xosint']) ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= isMenuActive(['serp', 'google', 'instagram', 'maps', 'sentimentanalysis', 'xosint']) ? 'active' : '' ?>">
                         <i class="nav-icon fas fa-chart-line"></i>
                         <p>
                             Modul Analisis Data
@@ -55,6 +55,14 @@
                                 <?= nbs(3) ?>
                                 <i class="fab fa-instagram nav-icon"></i>
                                 <p>Instagram OSINT</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('serp/xosint') ?>"
+                                class="nav-link <?= isMenuActive('serp/xosint') ? 'active' : '' ?>">
+                                <?= nbs(3) ?>
+                                <i class="fab fa-twitter nav-icon"></i>
+                                <p>X.com OSINT</p>
                             </a>
                         </li>
                         <li class="nav-item">

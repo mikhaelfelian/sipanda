@@ -59,6 +59,13 @@ $routes->group('serp', ['filter' => 'auth'], function ($routes) {
     $routes->get('sentiment', 'SentimentAnalysis::index');
     $routes->post('sentiment/analyze', 'SentimentAnalysis::analyze');
     $routes->post('sentiment/export-pdf', 'SentimentAnalysis::exportPdf');
+    
+    // X.com OSINT routes
+    $routes->get('xosint', 'XOsint::index');
+    $routes->post('xosint/profile', 'XOsint::profile');
+    $routes->post('xosint/search', 'XOsint::search');
+    $routes->post('xosint/trends', 'XOsint::trends');
+    $routes->post('xosint/export-profile-pdf', 'XOsint::exportProfilePdf');
 });
 
 // Words routes (using GET method)
@@ -83,5 +90,5 @@ $routes->group('insights', ['filter' => 'auth'], function ($routes) {
 // Pengaturan routes with auth filter
 $routes->group('pengaturan', ['filter' => 'auth'], function ($routes) {
     $routes->get('app', 'Pengaturan::index');
-    $routes->post('update', 'Pengaturan::update');
+    $routes->post('app/update', 'Pengaturan::update');
 });

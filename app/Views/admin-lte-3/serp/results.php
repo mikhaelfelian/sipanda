@@ -281,7 +281,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    var sentiment = response.data.sentiment;
+                    var sentiment = response.sentiment;
                     var badgeClass = sentiment === 'positive' ? 'success' : (sentiment === 'negative' ? 'danger' : 'warning');
                     var sentimentText = sentiment === 'positive' ? 'Positif' : (sentiment === 'negative' ? 'Negatif' : 'Netral');
                     
@@ -294,23 +294,23 @@ $(document).ready(function() {
                     
                     // Scores
                     html += '<div class="col-md-6">';
-                    html += '<p><strong>Skor Positif:</strong> <span class="badge badge-success">' + response.data.positive_score + '</span></p>';
-                    html += '<p><strong>Skor Negatif:</strong> <span class="badge badge-danger">' + response.data.negative_score + '</span></p>';
+                    html += '<p><strong>Skor Positif:</strong> <span class="badge badge-success">' + response.positiveScore + '%</span></p>';
+                    html += '<p><strong>Skor Negatif:</strong> <span class="badge badge-danger">' + response.negativeScore + '%</span></p>';
                     html += '</div>';
                     
                     // Words lists
                     html += '<div class="col-md-6">';
-                    if (response.data.positive_words && response.data.positive_words.length > 0) {
+                    if (response.positiveWords && response.positiveWords.length > 0) {
                         html += '<p><strong>Kata Positif:</strong> ';
-                        response.data.positive_words.forEach(function(word) {
+                        response.positiveWords.forEach(function(word) {
                             html += '<span class="badge badge-light mr-1">' + word + '</span>';
                         });
                         html += '</p>';
                     }
                     
-                    if (response.data.negative_words && response.data.negative_words.length > 0) {
+                    if (response.negativeWords && response.negativeWords.length > 0) {
                         html += '<p><strong>Kata Negatif:</strong> ';
-                        response.data.negative_words.forEach(function(word) {
+                        response.negativeWords.forEach(function(word) {
                             html += '<span class="badge badge-light mr-1">' + word + '</span>';
                         });
                         html += '</p>';

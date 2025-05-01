@@ -73,7 +73,16 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
-            'csrf' => ['except' => ['publik/*', 'serp/analyzeNews']]
+            'csrf' => ['except' => [
+                'publik/*', 
+                'serp/analyzeNews', 
+                'serp/sentiment/analyze', 
+                'serp/sentiment/export-pdf',
+                'serp/xosint/profile',
+                'serp/xosint/search',
+                'serp/xosint/trends',
+                'serp/xosint/export-profile-pdf'
+            ]]
         ],
         'after' => [
             // 'toolbar',

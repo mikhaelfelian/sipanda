@@ -26,9 +26,9 @@
                     <label for="deskripsi_app">Deskripsi Aplikasi <span class="text-danger">*</span></label>
                     <?= form_textarea([
                         'class' => 'form-control rounded-0',
-                        'id' => 'deskripsi',
-                        'name' => 'deskripsi',
-                        'value' => old('deskripsi', $Pengaturan->deskripsi),
+                        'id' => 'deskripsi_app',
+                        'name' => 'deskripsi_app',
+                        'value' => old('deskripsi_app', $Pengaturan->deskripsi_app),
                         'rows' => 3,
                         'required' => true
                     ]) ?>
