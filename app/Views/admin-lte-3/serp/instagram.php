@@ -142,6 +142,11 @@
                             <i class="fas fa-info-circle mr-1"></i>
                             Alat OSINT Instagram ini memungkinkan Anda melakukan penelitian pada akun dan hashtag Instagram untuk tujuan pengumpulan informasi.
                             Data yang ditampilkan tersedia untuk umum dan dikumpulkan menggunakan pustaka instagram-php-scraper.
+                            <?php if (isset($user) && $user->id == 1): // Check if admin ?>
+                            <a href="<?= site_url('serp/instagram/debug') ?>" class="btn btn-xs btn-outline-secondary ml-2">
+                                <i class="fas fa-bug"></i> Debug API
+                            </a>
+                            <?php endif; ?>
                         </p>
                     </div>
                 </div>

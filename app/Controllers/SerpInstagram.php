@@ -168,15 +168,60 @@ class SerpInstagram extends BaseController
             // Add a delay to avoid rate limiting
             sleep(1);
             
-            // Search for hashtag using static proxy
-            $hashtag = InstaWrapper::getHashtagStatic($query);
-            $mediaCount = $hashtag->getMediaCount();
+            // Initialize variables
+            $hashtag = null;
+            $mediaCount = 0;
+            $medias = [];
             
-            // Add another delay before the second API call
-            sleep(1);
-            
-            // Get recent media with this hashtag (limited to 12) using static proxy
-            $medias = InstaWrapper::getMediasByTagStatic($query, 12);
+            try {
+                // Try to use the hashtag method (which might fail with Set-Cookie error)
+                $hashtag = InstaWrapper::getHashtagStatic($query);
+                $mediaCount = method_exists($hashtag, 'getMediaCount') ? $hashtag->getMediaCount() : 0;
+
+                // Add another delay before the second API call
+                sleep(1);
+                
+                // Get recent media with this hashtag (limited to 12)
+                $medias = InstaWrapper::getMediasByTagStatic($query, 12);
+            } catch (\Error $e) {
+                // Handle Set-Cookie error
+                if (strpos($e->getMessage(), 'Undefined array key "Set-Cookie"') !== false) {
+                    log_message('error', 'Instagram API Error (Set-Cookie): ' . $e->getMessage());
+                    
+                    // Create a simpler hashtag object directly
+                    $hashtagObj = new \stdClass();
+                    $hashtagObj->name = $query;
+                    $hashtagObj->mediaCount = 0;
+                    $hashtagObj->getMediaCount = function() { return 0; };
+                    
+                    $hashtag = $hashtagObj;
+                    $mediaCount = 0;
+                    $medias = [];
+                    
+                    // Show a warning but continue with empty results
+                    session()->setFlashdata('warning', 'Instagram API temporarily unavailable. Showing limited results.');
+                } 
+                // Handle stdClass conversion error
+                else if (strpos($e->getMessage(), 'Object of class stdClass could not be converted to string') !== false) {
+                    log_message('error', 'Instagram API Error (stdClass conversion): ' . $e->getMessage());
+                    
+                    // Create a simpler hashtag object directly
+                    $hashtagObj = new \stdClass();
+                    $hashtagObj->name = $query;
+                    $hashtagObj->mediaCount = 0;
+                    $hashtagObj->getMediaCount = function() { return 0; };
+                    
+                    $hashtag = $hashtagObj;
+                    $mediaCount = 0;
+                    $medias = [];
+                    
+                    // Show a warning but continue with empty results
+                    session()->setFlashdata('warning', 'Instagram API encountered an error. Showing limited results.');
+                } else {
+                    // Re-throw if it's a different error
+                    throw $e;
+                }
+            }
 
             // Prepare data for view
             $data = [
@@ -331,5 +376,123 @@ class SerpInstagram extends BaseController
                 ->withInput()
                 ->with('error', 'Instagram API Error: ' . $errorMessage);
         }
+    }
+
+    /**
+     * Debug endpoint for testing Instagram API connections
+     */
+    public function debug()
+    {
+        // Check if user is logged in and is admin
+        if (!$this->ionAuth->loggedIn() || !$this->ionAuth->isAdmin()) {
+            return redirect()->to('/auth/login');
+        }
+        
+        // Initialize results array
+        $results = [
+            'status' => 'running',
+            'tests' => []
+        ];
+        
+        // Test 1: Test basic connection to Instagram
+        try {
+            $results['tests'][] = [
+                'name' => 'Basic Instagram connection',
+                'result' => 'Testing...'
+            ];
+            
+            $ch = curl_init('https://www.instagram.com/');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($httpCode === 200) {
+                $results['tests'][0]['result'] = 'Success (HTTP 200)';
+                $results['tests'][0]['status'] = 'success';
+            } else {
+                $results['tests'][0]['result'] = 'Failed (HTTP ' . $httpCode . ')';
+                $results['tests'][0]['status'] = 'error';
+            }
+        } catch (\Exception $e) {
+            $results['tests'][0]['result'] = 'Error: ' . $e->getMessage();
+            $results['tests'][0]['status'] = 'error';
+        }
+        
+        // Test 2: Test hashtag search
+        try {
+            $results['tests'][] = [
+                'name' => 'Hashtag search',
+                'result' => 'Testing...'
+            ];
+            
+            // Try a simple hashtag search
+            try {
+                $hashtag = InstaWrapper::getHashtagStatic('instagram');
+                $mediaCount = method_exists($hashtag, 'getMediaCount') ? $hashtag->getMediaCount() : 0;
+                
+                $results['tests'][1]['result'] = 'Success (Media count: ' . $mediaCount . ')';
+                $results['tests'][1]['status'] = 'success';
+            } catch (\Error $e) {
+                // Check if it's the Set-Cookie error
+                if (strpos($e->getMessage(), 'Undefined array key "Set-Cookie"') !== false) {
+                    $results['tests'][1]['result'] = 'Set-Cookie error detected: ' . $e->getMessage();
+                    $results['tests'][1]['status'] = 'error';
+                    $results['tests'][1]['solution'] = 'This is the error we\'re trying to fix. The Instagram API response doesn\'t include the expected cookie headers.';
+                } else {
+                    $results['tests'][1]['result'] = 'Error: ' . $e->getMessage();
+                    $results['tests'][1]['status'] = 'error';
+                }
+            }
+        } catch (\Exception $e) {
+            $results['tests'][1]['result'] = 'Exception: ' . $e->getMessage();
+            $results['tests'][1]['status'] = 'error';
+        }
+        
+        // Test 3: Test cookie handling
+        try {
+            $results['tests'][] = [
+                'name' => 'Cookie handling',
+                'result' => 'Testing...'
+            ];
+            
+            // Set a mock cookie and try again
+            try {
+                // Create a mock cookie
+                $mockCookies = [
+                    'Set-Cookie' => 'ig_cb=1; Domain=.instagram.com; Path=/; Secure'
+                ];
+                
+                // Set cookies
+                InstaWrapper::setCookiesStatic($mockCookies);
+                
+                // Try a hashtag search again
+                $hashtag = InstaWrapper::getHashtagStatic('instagram');
+                $mediaCount = method_exists($hashtag, 'getMediaCount') ? $hashtag->getMediaCount() : 0;
+                
+                $results['tests'][2]['result'] = 'Success with mock cookies (Media count: ' . $mediaCount . ')';
+                $results['tests'][2]['status'] = 'success';
+            } catch (\Error $e) {
+                $results['tests'][2]['result'] = 'Error with mock cookies: ' . $e->getMessage();
+                $results['tests'][2]['status'] = 'error';
+            }
+        } catch (\Exception $e) {
+            $results['tests'][2]['result'] = 'Exception: ' . $e->getMessage();
+            $results['tests'][2]['status'] = 'error';
+        }
+        
+        $results['status'] = 'complete';
+        
+        // Prepare data for view
+        $data = [
+            'title'          => 'Instagram API Debug',
+            'Pengaturan'     => $this->pengaturan,
+            'user'           => $this->ionAuth->user()->row(),
+            'isMenuActive'   => isMenuActive('serp/instagram') ? 'active' : '',
+            'results'        => $results
+        ];
+        
+        return view($this->theme->getThemePath() . '/serp/instagram_debug', $data);
     }
 } 

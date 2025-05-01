@@ -3,6 +3,23 @@
 <?= $this->section('content') ?>
 <section class="content">
     <div class="container-fluid">
+        <!-- Flash Messages -->
+        <?php if (session()->has('info')): ?>
+        <div class="alert alert-info alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h5><i class="icon fas fa-info"></i> Informasi</h5>
+            <?= session('info') ?>
+        </div>
+        <?php endif; ?>
+        
+        <?php if (session()->has('error')): ?>
+        <div class="alert alert-danger alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h5><i class="icon fas fa-ban"></i> Error</h5>
+            <?= session('error') ?>
+        </div>
+        <?php endif; ?>
+        
         <!-- Search Form Row -->
         <div class="row mb-3">
             <div class="col-12">
@@ -20,6 +37,41 @@
                             </a>
                         </div>
                     </div>
+                    <!-- Add search form if no results found -->
+                    <?php if (empty($mapResults)): ?>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-3">
+                            <i class="icon fas fa-info-circle"></i> Tidak ada hasil ditemukan untuk pencarian ini. Coba dengan kata kunci atau lokasi yang berbeda.
+                        </div>
+                        
+                        <?= form_open('serp/maps/search', ['method' => 'post', 'class' => 'mt-3']) ?>
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="form-group">
+                                        <label for="query">Kata Kunci</label>
+                                        <input type="text" class="form-control rounded-0" id="query" name="query"
+                                            placeholder="Masukkan bisnis, alamat, atau tempat..." required minlength="3" maxlength="255"
+                                            value="<?= set_value('query', isset($query) ? $query : '') ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="form-group">
+                                        <label for="location">Lokasi</label>
+                                        <input type="text" class="form-control rounded-0" id="location" name="location"
+                                            placeholder="Kota, wilayah, atau alamat (default: Indonesia)"
+                                            value="<?= set_value('location', isset($location) ? $location : '') ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label class="d-block">&nbsp;</label>
+                                        <button type="submit" class="btn btn-primary btn-block rounded-0">Cari</button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?= form_close() ?>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -83,7 +135,7 @@
                                 }
                             </script>
                             <script async defer
-                                src="https://maps.googleapis.com/maps/api/js?key=<?= config('GoogleMaps')->apiKey ?>&callback=initMap">
+                                src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBhz1N_G8_EYoozDDvCnmZwm-u_zs3jsqs&callback=initMap">
                             </script>
                         <?php else: ?>
                             <div class="text-center bg-light" style="height: 500px; display: flex; align-items: center; justify-content: center;">
@@ -97,7 +149,7 @@
                 </div>
             </div>
 
-            <!-- Search Results Listing -->
+            <!-- Search Results and Trending Searches -->
             <div class="col-md-4">
                 <div class="card rounded-0">
                     <div class="card-header">
@@ -159,6 +211,25 @@
                         <?php endif; ?>
                     </div>
                 </div>
+                
+                <!-- Trending Searches Card -->
+                <?php if (!empty($trendingSearches)): ?>
+                <div class="card rounded-0 mt-3">
+                    <div class="card-header">
+                        <h3 class="card-title">Pencarian Populer</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap">
+                            <?php foreach ($trendingSearches as $trend): ?>
+                                <a href="<?= site_url('serp/maps/search?query=' . urlencode(is_array($trend) ? $trend['title'] : $trend)) ?>" 
+                                   class="badge badge-info mr-2 mb-2 p-2">
+                                    <?= esc(is_array($trend) ? $trend['title'] : $trend) ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

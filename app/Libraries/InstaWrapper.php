@@ -243,7 +243,27 @@ class InstaWrapper extends Instagram
         try {
             // Since parent::getHashtag() doesn't exist, implement hashtag fetching directly
             $hashtag = trim(str_replace('#', '', $hashtag));
-            $medias = $this->getMediasByTag($hashtag, 1);
+            
+            try {
+                $medias = $this->getMediasByTag($hashtag, 1);
+            } catch (\Exception $e) {
+                // Check for Set-Cookie error
+                if (strpos($e->getMessage(), 'Undefined array key "Set-Cookie"') !== false) {
+                    log_message('warning', 'Set-Cookie error in getHashtag, using fallback method');
+                    
+                    // Try with mock cookies
+                    $mockCookies = [
+                        'Set-Cookie' => 'ig_cb=1; Domain=.instagram.com; Path=/; Secure'
+                    ];
+                    $this->setCookies($mockCookies);
+                    
+                    // Retry with delay
+                    sleep(2);
+                    $medias = $this->getMediasByTag($hashtag, 1);
+                } else {
+                    throw $e;
+                }
+            }
             
             // Create a simple hashtag object with available information
             $hashtagObj = new \stdClass();
@@ -285,7 +305,84 @@ class InstaWrapper extends Instagram
     public function getMediasByTag($tag, $count = 12, $maxId = null, $minTimestamp = null, $maxTimestamp = null)
     {
         try {
-            return parent::getMediasByTag($tag, $count, $maxId, $minTimestamp, $maxTimestamp);
+            try {
+                return parent::getMediasByTag($tag, $count, $maxId, $minTimestamp, $maxTimestamp);
+            } catch (\Exception $e) {
+                // Check for the specific Set-Cookie error
+                if (strpos($e->getMessage(), 'Undefined array key "Set-Cookie"') !== false) {
+                    log_message('warning', 'Set-Cookie error in getMediasByTag, using fallback method');
+                    
+                    // Try with mock cookies
+                    $mockCookies = [
+                        'Set-Cookie' => 'ig_cb=1; Domain=.instagram.com; Path=/; Secure'
+                    ];
+                    $this->setCookies($mockCookies);
+                    
+                    // Retry with delay
+                    sleep(2);
+                    
+                    // Make a custom request to avoid the same error
+                    $endpoint = 'explore/tags/' . urlencode($tag) . '/?__a=1&__d=dis';
+                    
+                    // Custom implementation to fetch tag data
+                    $ch = curl_init();
+                    $url = 'https://www.instagram.com/' . $endpoint;
+                    
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Accept: application/json',
+                        'Cookie: ig_cb=1'
+                    ]);
+                    
+                    $response = curl_exec($ch);
+                    curl_close($ch);
+                    
+                    // Try to process the response
+                    if (!empty($response)) {
+                        $jsonData = json_decode($response);
+                        
+                        // If we got valid data, create media objects
+                        if ($jsonData && isset($jsonData->data) && isset($jsonData->data->hashtag) && 
+                            isset($jsonData->data->hashtag->edge_hashtag_to_media) && 
+                            isset($jsonData->data->hashtag->edge_hashtag_to_media->edges)) {
+                                
+                            $mediaArray = [];
+                            $edges = $jsonData->data->hashtag->edge_hashtag_to_media->edges;
+                            
+                            foreach ($edges as $edge) {
+                                if (count($mediaArray) >= $count) {
+                                    break;
+                                }
+                                
+                                if (isset($edge->node)) {
+                                    // Create a basic media object
+                                    $media = new \InstagramScraper\Model\Media();
+                                    $media->setId($edge->node->id ?? '');
+                                    $media->setShortCode($edge->node->shortcode ?? '');
+                                    $media->setLink('https://www.instagram.com/p/' . ($edge->node->shortcode ?? ''));
+                                    
+                                    if (isset($edge->node->edge_media_to_caption->edges[0]->node->text)) {
+                                        $media->setCaption($edge->node->edge_media_to_caption->edges[0]->node->text);
+                                    }
+                                    
+                                    $mediaArray[] = $media;
+                                }
+                            }
+                            
+                            return $mediaArray;
+                        }
+                    }
+                    
+                    // If custom approach failed, try parent method one more time
+                    return parent::getMediasByTag($tag, $count, $maxId, $minTimestamp, $maxTimestamp);
+                }
+                
+                // For other errors, rethrow
+                throw $e;
+            }
         } catch (\Exception $e) {
             log_message('error', 'Instagram API Error in getMediasByTag: ' . $e->getMessage());
             throw $e;
@@ -729,5 +826,51 @@ class InstaWrapper extends Instagram
         }
         
         return $obj;
+    }
+
+    /**
+     * Set cookies in the Instagram API client
+     * 
+     * @param array $cookies The cookies to set
+     * @return void
+     */
+    public static function setCookiesStatic($cookies)
+    {
+        try {
+            if (self::$instance === null) {
+                // Initialize static instance if not already done
+                self::getInstance();
+            }
+            
+            // Safely handle cookie setting
+            if (is_array($cookies) && !empty($cookies)) {
+                if (isset($cookies['Set-Cookie'])) {
+                    self::$instance->setCookies($cookies);
+                } else {
+                    // Handle case where Set-Cookie is missing but try to continue
+                    $cookieHeader = '';
+                    foreach ($cookies as $key => $value) {
+                        $cookieHeader .= "$key=$value; ";
+                    }
+                    
+                    if (!empty($cookieHeader)) {
+                        // Create a simulated cookie array
+                        $simulatedCookies = [
+                            'Set-Cookie' => $cookieHeader
+                        ];
+                        self::$instance->setCookies($simulatedCookies);
+                    } else {
+                        // Log the issue but proceed without cookies
+                        log_message('warning', 'InstaWrapper: Empty cookies provided, proceeding without cookies');
+                    }
+                }
+            } else {
+                // Log the issue but proceed without cookies
+                log_message('warning', 'InstaWrapper: Invalid cookies format provided');
+            }
+        } catch (\Exception $e) {
+            // Log the error but allow operation to continue
+            log_message('error', 'InstaWrapper setCookiesStatic error: ' . $e->getMessage());
+        }
     }
 } 
