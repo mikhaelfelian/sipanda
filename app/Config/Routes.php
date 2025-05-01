@@ -31,7 +31,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
 
 // SERP routes
-$routes->group('serp', function ($routes) {
+$routes->group('serp', ['filter' => 'auth'], function ($routes) {
     $routes->get('google', 'Serp::index');
     $routes->match(['get', 'post'], 'search', 'Serp::search');
     $routes->get('result', 'Serp::result');
@@ -62,7 +62,7 @@ $routes->group('serp', function ($routes) {
 });
 
 // Words routes (using GET method)
-$routes->group('words', function ($routes) {
+$routes->group('words', ['filter' => 'auth'], function ($routes) {
     $routes->get('/', 'Words::index');
     $routes->get('add', 'Words::add');
     $routes->get('edit/(:num)', 'Words::edit/$1');
@@ -74,8 +74,14 @@ $routes->group('words', function ($routes) {
 });
 
 // PHPInsights Demo routes
-$routes->group('insights', function ($routes) {
+$routes->group('insights', ['filter' => 'auth'], function ($routes) {
     $routes->get('/', 'InsightsDemo::index');
     $routes->get('api/analyze', 'InsightsDemo::apiAnalyze');
     $routes->get('api/compare', 'InsightsDemo::apiCompare');
+});
+
+// Pengaturan routes with auth filter
+$routes->group('pengaturan', ['filter' => 'auth'], function ($routes) {
+    $routes->get('app', 'Pengaturan::index');
+    $routes->post('update', 'Pengaturan::update');
 });
