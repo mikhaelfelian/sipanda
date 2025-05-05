@@ -52,90 +52,46 @@ class Serp extends BaseController
 
     public function search()
     {
-        // Validate input
-        $rules = [
-            'query' => 'required|min_length[3]|max_length[255]',
-            'deep_search' => 'permit_empty|in_list[0,1]',
-            'province' => 'permit_empty|max_length[100]',
-            'country' => 'permit_empty|max_length[100]'
-        ];
-
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        // Check if user is logged in
+        if (!$this->ionAuth->loggedIn()) {
+            return redirect()->to('/auth/login');
         }
-
-        $query = $this->request->getPost('query');
-        $deepSearch = (bool)$this->request->getPost('deep_search');
-        $province = $this->request->getPost('province');
-        $country = $this->request->getPost('country');
-
-        // Save keyword to database
-        $this->keywordModel->save([
-            'keyword' => $query,
-            'search_count' => 1,
-            'last_searched' => date('Y-m-d H:i:s')
-        ]);
-
-        // Perform OSINT analysis
-        $osintAnalysis = $this->osintAnalyzer->analyzeTrend($query);
-
-        // Prepare search parameters
-        $searchParams = [
-            'engine'        => 'google',
-            'google_domain' => 'google.co.id',
-            'gl'            => 'id',
-            'hl'            => 'id',
-            'num'           => 20
-        ];
-
-        // Add deep search parameters if enabled
-        if ($deepSearch) {
-            $searchParams = array_merge($searchParams, [
-                'tbs' => 'qdr:y' // Past year
-            ]);
-        }
-
-        // Add province to query if provided
-        if (!empty($province)) {
-            $query .= ' ' . $province;
-        }
-
-        // Add country-specific parameters if provided
-        if (!empty($country)) {
-            // Override default country settings with the specified country
-            $searchParams['gl'] = strtolower($country);
+        
+        // Check if this is a POST request
+        if ($this->request->getMethod() === 'post') {
+            // Get form data
+            $query = $this->request->getPost('query');
+            $engine = $this->request->getPost('engine') ?? 'google';
+            $deepSearch = $this->request->getPost('deep_search') === 'on';
+            $useAI = $this->request->getPost('use_ai') === 'on';
             
-            // For Indonesia, use google.co.id (default)
-            if ($country == 'ID') {
-                $searchParams['google_domain'] = 'google.co.id';
-            }
-        }
-
-        try {
-            // Perform search
-            // $results = $this->serpApi->search($query, $searchParams);
-
-            return redirect()->to(base_url('serp/result?q=' . urlencode($query) . 
-                '&deep_search=' . $deepSearch .
-                (!empty($province) ? '&province=' . urlencode($province) : '') .
-                (!empty($country) ? '&country=' . urlencode($country) : '')
-            ));
-        } catch (\RuntimeException $e) {
-            if (strpos($e->getMessage(), 'timed out') !== false) {
-                // Show a toast error for timeout
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Timeout koneksi ke Google API. Silakan coba lagi nanti.');
-            } else if (strpos($e->getMessage(), 'SERP API Error') !== false) {
-                // Show a toast error for other API errors
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Koneksi ke Google API gagal: ' . $e->getMessage());
+            // Validate query
+            if (empty($query) || strlen($query) < 3) {
+                return redirect()->to('/serp')->with('error', 'Kata kunci pencarian diperlukan (minimal 3 karakter)');
             }
             
-            // For other unexpected errors, rethrow
-            throw $e;
+            // Store search in user history
+            $userId = $this->ionAuth->user()->row()->id;
+            $this->searchHistoryModel->addSearchHistory($userId, 'search', $query, json_encode([
+                'engine' => $engine,
+                'deep_search' => $deepSearch,
+                'use_ai' => $useAI
+            ]));
+            
+            // Prepare URL parameters
+            $params = [
+                'q' => $query,
+                'engine' => $engine,
+                'deep_search' => $deepSearch ? '1' : '0',
+                'use_ai' => $useAI ? '1' : '0'
+            ];
+            
+            // Redirect to results page with parameters
+            return redirect()->to('/serp/result?' . http_build_query($params));
         }
+        
+        // If not a POST request, redirect to search form
+        return redirect()->to('/serp');
     }
 
     public function analyzeNews()
@@ -318,6 +274,7 @@ class Serp extends BaseController
 
         // Get data from request
         $query = $this->request->getPost('query');
+        $engine = $this->request->getPost('engine', FILTER_SANITIZE_STRING) ?? 'google';
         $resultsJson = $this->request->getPost('results');
         $results = json_decode($resultsJson, true);
         
@@ -335,12 +292,12 @@ class Serp extends BaseController
             // Set document information
             $pdf->SetCreator(PDF_CREATOR);
             $pdf->SetAuthor('SIPANDA');
-            $pdf->SetTitle('Analisis Hasil Pencarian');
+            $pdf->SetTitle('Analisis Hasil Pencarian ' . strtoupper(str_replace('_', ' ', $engine)));
             $pdf->SetSubject('Laporan Analisis Hasil Pencarian');
             $pdf->SetKeywords('Pencarian, Hasil, Analisis, Laporan');
             
             // Set default header data
-            $pdf->SetHeaderData('', 0, 'Analisis Hasil Pencarian', 'Dibuat pada: ' . date('Y-m-d H:i:s'));
+            $pdf->SetHeaderData('', 0, 'Analisis Hasil Pencarian ' . strtoupper(str_replace('_', ' ', $engine)), 'Dibuat pada: ' . date('Y-m-d H:i:s'));
             
             // Set header and footer fonts
             $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
@@ -368,7 +325,7 @@ class Serp extends BaseController
             
             // Title
             $pdf->SetFont('dejavusans', 'B', 16);
-            $pdf->Cell(0, 10, 'Analisis Hasil Pencarian', 0, 1, 'C');
+            $pdf->Cell(0, 10, 'Analisis Hasil Pencarian ' . strtoupper(str_replace('_', ' ', $engine)), 0, 1, 'C');
             $pdf->Ln(5);
             
             // Search query
@@ -399,7 +356,7 @@ class Serp extends BaseController
                         $neutralCount++;
                     }
                     
-                    if (strpos($result['viral'], 'Likely') !== false) {
+                    if (strpos($result['viral'] ?? '', 'Likely') !== false) {
                         $viralCount++;
                     }
                 }
@@ -420,14 +377,40 @@ class Serp extends BaseController
             $pdf->SetFont('dejavusans', 'B', 14);
             $pdf->Cell(0, 10, 'Hasil Detail', 0, 1);
             
-            // Results table header
+            // Different headers based on engine type
             $pdf->SetFont('dejavusans', 'B', 10);
             $pdf->SetFillColor(230, 230, 230);
+            
+            // Common column: row number
             $pdf->Cell(10, 10, '#', 1, 0, 'C', 1);
-            $pdf->Cell(60, 10, 'Judul', 1, 0, 'C', 1);
-            $pdf->Cell(40, 10, 'Tanggal', 1, 0, 'C', 1);
-            $pdf->Cell(40, 10, 'Sentimen', 1, 0, 'C', 1);
-            $pdf->Cell(40, 10, 'Prediksi Viral', 1, 1, 'C', 1);
+            
+            // Adjust columns based on engine type
+            if ($engine === 'google_images') {
+                $pdf->Cell(80, 10, 'Judul', 1, 0, 'C', 1);
+                $pdf->Cell(50, 10, 'Sumber', 1, 0, 'C', 1);
+                $pdf->Cell(50, 10, 'Sentimen', 1, 1, 'C', 1);
+            } elseif ($engine === 'youtube') {
+                $pdf->Cell(60, 10, 'Judul Video', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Channel', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Tanggal', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Sentimen', 1, 1, 'C', 1);
+            } elseif ($engine === 'twitter') {
+                $pdf->Cell(60, 10, 'Tweet', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'User', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Tanggal', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Sentimen', 1, 1, 'C', 1);
+            } elseif ($engine === 'reddit') {
+                $pdf->Cell(60, 10, 'Judul Post', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Subreddit', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Tanggal', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Sentimen', 1, 1, 'C', 1);
+            } else {
+                // Default columns for Google, Bing, News, Scholar
+                $pdf->Cell(60, 10, 'Judul', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Tanggal', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Sentimen', 1, 0, 'C', 1);
+                $pdf->Cell(40, 10, 'Prediksi Viral', 1, 1, 'C', 1);
+            }
             
             // Results table content
             $pdf->SetFont('dejavusans', '', 10);
@@ -441,48 +424,68 @@ class Serp extends BaseController
                 $pdf->Cell(10, 10, ($i + 1), 1, 0, 'C');
                 
                 // Title (shortened if needed)
-                $title = $result['title'];
+                $title = $result['title'] ?? 'No Title';
                 if (strlen($title) > 30) {
                     $title = substr($title, 0, 27) . '...';
                 }
-                $pdf->Cell(60, 10, $title, 1, 0);
                 
-                // Published date
-                $publishedDate = '';
-                if (!empty($result['date'])) {
-                    $publishedDate = $result['date'];
-                } elseif (!empty($result['published_date'])) {
-                    $publishedDate = $result['published_date'];
+                // Display content based on engine type
+                if ($engine === 'google_images') {
+                    $pdf->Cell(80, 10, $title, 1, 0);
+                    $pdf->Cell(50, 10, $result['source'] ?? '', 1, 0, 'C');
+                    
+                    // Sentiment with color
+                    $sentiment = !empty($result['sentiment']) ? $result['sentiment'] : 'Belum dianalisis';
+                    $this->addSentimentCell($pdf, $sentiment, 50);
+                    $pdf->Ln();
+                } elseif ($engine === 'youtube') {
+                    $pdf->Cell(60, 10, $title, 1, 0);
+                    $pdf->Cell(40, 10, $result['source'] ?? '', 1, 0, 'C');
+                    $pdf->Cell(40, 10, $result['date'] ?? '', 1, 0, 'C');
+                    
+                    // Sentiment with color
+                    $sentiment = !empty($result['sentiment']) ? $result['sentiment'] : 'Belum dianalisis';
+                    $this->addSentimentCell($pdf, $sentiment, 40);
+                    $pdf->Ln();
+                } elseif ($engine === 'twitter') {
+                    $pdf->Cell(60, 10, $title, 1, 0);
+                    $pdf->Cell(40, 10, $result['source'] ?? '', 1, 0, 'C');
+                    $pdf->Cell(40, 10, $result['date'] ?? '', 1, 0, 'C');
+                    
+                    // Sentiment with color
+                    $sentiment = !empty($result['sentiment']) ? $result['sentiment'] : 'Belum dianalisis';
+                    $this->addSentimentCell($pdf, $sentiment, 40);
+                    $pdf->Ln();
+                } elseif ($engine === 'reddit') {
+                    $pdf->Cell(60, 10, $title, 1, 0);
+                    $pdf->Cell(40, 10, $result['source'] ?? '', 1, 0, 'C');
+                    $pdf->Cell(40, 10, $result['date'] ?? '', 1, 0, 'C');
+                    
+                    // Sentiment with color
+                    $sentiment = !empty($result['sentiment']) ? $result['sentiment'] : 'Belum dianalisis';
+                    $this->addSentimentCell($pdf, $sentiment, 40);
+                    $pdf->Ln();
+                } else {
+                    // Default Google, Bing, News, Scholar display
+                    $pdf->Cell(60, 10, $title, 1, 0);
+                    
+                    // Published date
+                    $publishedDate = $result['date'] ?? '';
+                    $pdf->Cell(40, 10, $publishedDate, 1, 0, 'C');
+                    
+                    // Sentiment with color
+                    $sentiment = !empty($result['sentiment']) ? $result['sentiment'] : 'Belum dianalisis';
+                    $this->addSentimentCell($pdf, $sentiment, 40);
+                    
+                    // Viral prediction
+                    $viral = !empty($result['viral']) ? $result['viral'] : 'Belum dianalisis';
+                    if ($viral == 'Likely Viral') {
+                        $viral = 'Berpotensi Viral';
+                    } else if ($viral == 'Not Likely Viral') {
+                        $viral = 'Tidak Berpotensi Viral';
+                    }
+                    $pdf->Cell(40, 10, $viral, 1, 1, 'C');
                 }
-                $pdf->Cell(40, 10, $publishedDate, 1, 0, 'C');
-                
-                // Sentiment with color
-                $sentiment = !empty($result['sentiment']) ? $result['sentiment'] : 'Belum dianalisis';
-                
-                // Translate sentiment for display
-                $sentimentDisplay = $sentiment;
-                if ($sentiment == 'positive') {
-                    $sentimentDisplay = 'POSITIF';
-                    $pdf->SetTextColor(0, 128, 0); // Green
-                } else if ($sentiment == 'negative') {
-                    $sentimentDisplay = 'NEGATIF';
-                    $pdf->SetTextColor(255, 0, 0); // Red
-                } else if ($sentiment == 'neutral') {
-                    $sentimentDisplay = 'NETRAL';
-                    $pdf->SetTextColor(255, 165, 0); // Orange
-                }
-                
-                $pdf->Cell(40, 10, $sentimentDisplay, 1, 0, 'C');
-                $pdf->SetTextColor(0, 0, 0); // Reset to black
-                
-                // Viral prediction
-                $viral = !empty($result['viral']) ? $result['viral'] : 'Belum dianalisis';
-                if ($viral == 'Likely Viral') {
-                    $viral = 'Berpotensi Viral';
-                } else if ($viral == 'Not Likely Viral') {
-                    $viral = 'Tidak Berpotensi Viral';
-                }
-                $pdf->Cell(40, 10, $viral, 1, 1, 'C');
             }
             
             $pdf->Ln(10);
@@ -500,20 +503,28 @@ class Serp extends BaseController
                 
                 // Result title
                 $pdf->SetFont('dejavusans', 'B', 12);
-                $pdf->Cell(0, 10, 'Hasil #' . ($i + 1) . ': ' . $result['title'], 0, 1);
+                $pdf->Cell(0, 10, 'Hasil #' . ($i + 1) . ': ' . ($result['title'] ?? 'No Title'), 0, 1);
                 
                 // Link
                 $pdf->SetFont('dejavusans', '', 10);
                 $pdf->SetTextColor(0, 0, 255); // Blue
                 $pdf->Cell(20, 8, 'URL:', 0, 0);
-                $pdf->Cell(0, 8, $result['link'], 0, 1);
+                $pdf->Cell(0, 8, $result['link'] ?? 'No Link', 0, 1);
                 $pdf->SetTextColor(0, 0, 0); // Reset to black
                 
+                // Show source if available
+                if (!empty($result['source'])) {
+                    $pdf->Cell(20, 8, 'Sumber:', 0, 0);
+                    $pdf->Cell(0, 8, $result['source'], 0, 1);
+                }
+                
                 // Snippet
-                $pdf->SetFont('dejavusans', 'B', 10);
-                $pdf->Cell(0, 8, 'Cuplikan Konten:', 0, 1);
-                $pdf->SetFont('dejavusans', '', 10);
-                $pdf->MultiCell(0, 8, $result['snippet'], 0, 'L');
+                if (!empty($result['snippet'])) {
+                    $pdf->SetFont('dejavusans', 'B', 10);
+                    $pdf->Cell(0, 8, 'Cuplikan Konten:', 0, 1);
+                    $pdf->SetFont('dejavusans', '', 10);
+                    $pdf->MultiCell(0, 8, $result['snippet'], 0, 'L');
+                }
                 
                 // Analysis results if available
                 if (!empty($result['sentiment'])) {
@@ -540,14 +551,16 @@ class Serp extends BaseController
                     $pdf->SetTextColor(0, 0, 0); // Reset to black
                     
                     // Viral prediction
-                    $pdf->Cell(40, 8, 'Prediksi Viral:', 0, 0);
-                    $viral = $result['viral'];
-                    if ($viral == 'Likely Viral') {
-                        $viral = 'Berpotensi Viral';
-                    } else if ($viral == 'Not Likely Viral') {
-                        $viral = 'Tidak Berpotensi Viral';
+                    if (!empty($result['viral'])) {
+                        $pdf->Cell(40, 8, 'Prediksi Viral:', 0, 0);
+                        $viral = $result['viral'];
+                        if ($viral == 'Likely Viral') {
+                            $viral = 'Berpotensi Viral';
+                        } else if ($viral == 'Not Likely Viral') {
+                            $viral = 'Tidak Berpotensi Viral';
+                        }
+                        $pdf->Cell(0, 8, $viral, 0, 1);
                     }
-                    $pdf->Cell(0, 8, $viral, 0, 1);
                 }
                 
                 // Add separator
@@ -576,6 +589,28 @@ class Serp extends BaseController
     }
     
     /**
+     * Helper method to add sentiment cell with appropriate color
+     */
+    private function addSentimentCell($pdf, $sentiment, $width = 40)
+    {
+        // Translate sentiment for display
+        $sentimentDisplay = $sentiment;
+        if ($sentiment == 'positive') {
+            $sentimentDisplay = 'POSITIF';
+            $pdf->SetTextColor(0, 128, 0); // Green
+        } else if ($sentiment == 'negative') {
+            $sentimentDisplay = 'NEGATIF';
+            $pdf->SetTextColor(255, 0, 0); // Red
+        } else if ($sentiment == 'neutral') {
+            $sentimentDisplay = 'NETRAL';
+            $pdf->SetTextColor(255, 165, 0); // Orange
+        }
+        
+        $pdf->Cell($width, 10, $sentimentDisplay, 1, 0, 'C');
+        $pdf->SetTextColor(0, 0, 0); // Reset to black
+    }
+    
+    /**
      * Handle direct URL access to search results via GET request
      * 
      * @return mixed
@@ -589,6 +624,7 @@ class Serp extends BaseController
 
         // Get query from URL parameter
         $query = $this->request->getGet('q');
+        $engine = $this->request->getGet('engine', FILTER_SANITIZE_STRING) ?? 'google';
         $deepSearch = (bool)$this->request->getGet('deep_search', FILTER_VALIDATE_BOOLEAN);
         $useAI = (bool)$this->request->getGet('use_ai', FILTER_VALIDATE_BOOLEAN);
         
@@ -653,60 +689,15 @@ class Serp extends BaseController
             'last_searched' => date('Y-m-d H:i:s')
         ]);
         
-        // Prepare search parameters
-        $searchParams = [
-            'engine' => 'google',
-            'google_domain' => 'google.co.id',
-            'gl' => 'id',
-            'hl' => 'id',
-            'num' => 20,
-            'tbm' => 'nws',       // Search for news results
-            'tbs' => 'qdr:d'      // Sort by date (newest first)
-        ];
-        
-        // Add deep search parameters if enabled
-        if ($deepSearch) {
-            $searchParams['tbs'] = 'qdr:y,sbd:1'; // Past year, sorted by date
-        }
+        // Prepare search parameters based on selected engine
+        $searchParams = $this->getSearchParamsByEngine($engine, $deepSearch);
         
         try {
             // Perform search
             $results = $this->serpApi->search($query, $searchParams);
             
-            // Process the results to ensure dates are properly formatted
-            $processedResults = [];
-            $newsResults = $results['news_results'] ?? ($results['organic_results'] ?? []);
-            
-            foreach ($newsResults as $result) {
-                // Extract and process date if available
-                if (!empty($result['date'])) {
-                    // Date format can vary, so try to standardize it
-                    try {
-                        $dateObj = new \DateTime($result['date']);
-                        $result['formatted_date'] = $dateObj->format('Y-m-d H:i:s');
-                    } catch (\Exception $e) {
-                        // If date parsing fails, keep original
-                        $result['formatted_date'] = $result['date'];
-                    }
-                } else if (!empty($result['published_date'])) {
-                    try {
-                        $dateObj = new \DateTime($result['published_date']);
-                        $result['formatted_date'] = $dateObj->format('Y-m-d H:i:s');
-                    } catch (\Exception $e) {
-                        $result['formatted_date'] = $result['published_date'];
-                    }
-                } else if (!empty($result['snippet']) && preg_match('/(\d{1,2}\s+\w+\s+\d{4})|(\d{4}-\d{1,2}-\d{1,2})/', $result['snippet'], $matches)) {
-                    // Try to extract date from snippet if in common format
-                    try {
-                        $dateObj = new \DateTime($matches[0]);
-                        $result['formatted_date'] = $dateObj->format('Y-m-d H:i:s');
-                    } catch (\Exception $e) {
-                        // Ignore if parsing fails
-                    }
-                }
-                
-                $processedResults[] = $result;
-            }
+            // Process results based on engine type
+            $processedResults = $this->processSearchResults($results, $engine);
             
             // Get user's recent searches
             $userId = $this->ionAuth->user()->row()->id;
@@ -716,9 +707,10 @@ class Serp extends BaseController
             $data = [
                 'title' => 'Search Results: ' . $query,
                 'query' => $query,
+                'engine' => $engine,
                 'results' => $processedResults,
                 'osintAnalysis' => $osintAnalysis,
-                'aiAnalysis' => $aiAnalysis,  // Add AI analysis
+                'aiAnalysis' => $aiAnalysis,
                 'deepSearch' => $deepSearch,
                 'useAI' => $useAI,
                 'Pengaturan' => $this->pengaturan,
@@ -731,15 +723,170 @@ class Serp extends BaseController
         } catch (\RuntimeException $e) {
             if (strpos($e->getMessage(), 'timed out') !== false) {
                 return redirect()->to('/serp')
-                    ->with('error', 'Timeout koneksi ke Google API. Silakan coba lagi nanti.');
+                    ->with('error', 'Timeout koneksi ke API. Silakan coba lagi nanti.');
             } else if (strpos($e->getMessage(), 'SERP API Error') !== false) {
                 return redirect()->to('/serp')
-                    ->with('error', 'Koneksi ke Google API gagal: ' . $e->getMessage());
+                    ->with('error', 'Koneksi ke API gagal: ' . $e->getMessage());
             }
             
             // For other unexpected errors, rethrow
             throw $e;
         }
+    }
+
+    /**
+     * Get search parameters based on engine type
+     *
+     * @param string $engine Engine type (google, youtube, twitter, etc)
+     * @param bool $deepSearch Whether to perform deep search
+     * @return array Search parameters
+     */
+    private function getSearchParamsByEngine($engine, $deepSearch = false)
+    {
+        $params = [
+            'google_domain' => 'google.co.id',
+            'gl' => 'id',
+            'hl' => 'id',
+            'num' => 20
+        ];
+        
+        switch ($engine) {
+            case 'google_news':
+                $params['engine'] = 'google';
+                $params['tbm'] = 'nws';       // Search for news results
+                $params['tbs'] = $deepSearch ? 'qdr:y,sbd:1' : 'qdr:d';  // Past day or year
+                break;
+            
+            case 'google_images':
+                $params['engine'] = 'google';
+                $params['tbm'] = 'isch';      // Search for images
+                break;
+            
+            case 'youtube':
+                $params['engine'] = 'youtube';
+                $params['sp'] = $deepSearch ? 'CAISAhAB' : 'CAISAggB';  // Date filter
+                break;
+            
+            case 'twitter':
+                $params['engine'] = 'twitter';
+                if ($deepSearch) {
+                    $params['min_retweets'] = 5;  // Min retweets for deep search
+                }
+                break;
+                
+            case 'reddit':
+                $params['engine'] = 'reddit';
+                $params['time_frame'] = $deepSearch ? 'year' : 'month';
+                break;
+                
+            case 'bing':
+                $params['engine'] = 'bing';
+                break;
+                
+            case 'google_scholar':
+                $params['engine'] = 'google_scholar';
+                break;
+                
+            default:
+                // Default Google search
+                $params['engine'] = 'google';
+                $params['tbs'] = $deepSearch ? 'qdr:y' : '';  // Past year for deep search
+                break;
+        }
+        
+        return $params;
+    }
+
+    /**
+     * Process search results based on engine type
+     *
+     * @param array $results Raw search results
+     * @param string $engine Engine type
+     * @return array Processed results
+     */
+    private function processSearchResults($results, $engine)
+    {
+        $processedResults = [];
+        
+        switch ($engine) {
+            case 'google_news':
+                $sourceResults = $results['news_results'] ?? [];
+                foreach ($sourceResults as $result) {
+                    // Process date format
+                    if (!empty($result['date'])) {
+                        try {
+                            $dateObj = new \DateTime($result['date']);
+                            $result['formatted_date'] = $dateObj->format('Y-m-d H:i:s');
+                        } catch (\Exception $e) {
+                            $result['formatted_date'] = $result['date'];
+                        }
+                    }
+                    $processedResults[] = $result;
+                }
+                break;
+            
+            case 'youtube':
+                $sourceResults = $results['video_results'] ?? [];
+                foreach ($sourceResults as $result) {
+                    // Additional processing for YouTube results
+                    $result['type'] = 'video';
+                    $processedResults[] = $result;
+                }
+                break;
+            
+            case 'twitter':
+                $sourceResults = $results['tweets'] ?? [];
+                foreach ($sourceResults as $result) {
+                    // Additional processing for Twitter results
+                    $result['type'] = 'tweet';
+                    if (!empty($result['published_date'])) {
+                        try {
+                            $dateObj = new \DateTime($result['published_date']);
+                            $result['formatted_date'] = $dateObj->format('Y-m-d H:i:s');
+                        } catch (\Exception $e) {
+                            $result['formatted_date'] = $result['published_date'];
+                        }
+                    }
+                    $processedResults[] = $result;
+                }
+                break;
+                
+            case 'reddit':
+                $sourceResults = $results['posts'] ?? [];
+                foreach ($sourceResults as $result) {
+                    // Additional processing for Reddit results
+                    $result['type'] = 'reddit';
+                    $processedResults[] = $result;
+                }
+                break;
+                
+            case 'google_images':
+                $sourceResults = $results['images_results'] ?? [];
+                foreach ($sourceResults as $result) {
+                    $result['type'] = 'image';
+                    $processedResults[] = $result;
+                }
+                break;
+                
+            case 'google_scholar':
+                $sourceResults = $results['organic_results'] ?? [];
+                foreach ($sourceResults as $result) {
+                    $result['type'] = 'scholar';
+                    $processedResults[] = $result;
+                }
+                break;
+                
+            default:
+                // Default Google search results
+                $sourceResults = $results['organic_results'] ?? [];
+                foreach ($sourceResults as $result) {
+                    $result['type'] = 'web';
+                    $processedResults[] = $result;
+                }
+                break;
+        }
+        
+        return $processedResults;
     }
 
     /**
@@ -757,6 +904,7 @@ class Serp extends BaseController
 
         // Get data from request
         $query = $this->request->getPost('query');
+        $engine = $this->request->getPost('engine', FILTER_SANITIZE_STRING) ?? 'google';
         $resultsJson = $this->request->getPost('results');
         $results = json_decode($resultsJson, true);
         
@@ -776,8 +924,25 @@ class Serp extends BaseController
             $sentimentAnalysis = '';
             $keywordPrediction = '';
             
+            // Create a title for the report based on engine type
+            $engineTitle = strtoupper(str_replace('_', ' ', $engine));
+            
             foreach ($results as $i => $result) {
-                $contentList .= ($i + 1) . '. ' . ($i < 1 ? 'Akun media sosial: ' : 'Website: ');
+                // Format content list based on engine type
+                if ($engine === 'twitter') {
+                    $contentList .= ($i + 1) . '. Tweet: ';
+                    $contentList .= '@' . ($result['source'] ?? '') . ' - ';
+                } else if ($engine === 'youtube') {
+                    $contentList .= ($i + 1) . '. Video: ';
+                    $contentList .= ($result['source'] ?? '') . ' - ';
+                } else if ($engine === 'reddit') {
+                    $contentList .= ($i + 1) . '. Reddit: ';
+                    $contentList .= ($result['source'] ?? '') . ' - ';
+                } else if ($engine === 'google_images') {
+                    $contentList .= ($i + 1) . '. Gambar: ';
+                } else {
+                    $contentList .= ($i + 1) . '. ' . ($i < 1 ? 'Akun media sosial: ' : 'Website: ');
+                }
                 
                 // Use published date if available
                 $publishedDate = date('Y-m-d');
@@ -787,16 +952,18 @@ class Serp extends BaseController
                     $publishedDate = date('Y-m-d', strtotime($result['published_date']));
                 }
                 
-                $contentList .= $publishedDate . ' ' . $result['link'] . ' - ' . $result['snippet'] . "\n";
+                $contentList .= $publishedDate . ' ' . ($result['link'] ?? 'No link') . ' - ' . ($result['snippet'] ?? ($result['title'] ?? 'No content')) . "\n";
                 
                 if (!empty($result['sentiment'])) {
                     $sentimentAnalysis .= $result['sentiment'] . "\n";
                 }
                 
                 // Extract keywords from title
-                $words = explode(' ', $result['title']);
-                $keywords = array_slice($words, 0, min(3, count($words)));
-                $keywordPrediction .= implode(', ', $keywords) . ', ';
+                if (!empty($result['title'])) {
+                    $words = explode(' ', $result['title']);
+                    $keywords = array_slice($words, 0, min(3, count($words)));
+                    $keywordPrediction .= implode(', ', $keywords) . ', ';
+                }
             }
             
             // Format the text template
@@ -810,7 +977,7 @@ class Serp extends BaseController
                 $greeting = 'siang';
             }
             
-            $formattedText .= "Selamat {$greeting} Komandan, Mohon ijin melaporkan pada hari {$hari_laporan} <division> melaksanakan Patroli Cyber di Media Sosial ";
+            $formattedText .= "Selamat {$greeting} Komandan, Mohon ijin melaporkan pada hari {$hari_laporan} <division> melaksanakan Patroli Cyber di {$engineTitle} ";
             $formattedText .= "terkait Issue : " . $keywordPrediction . " serta yang mendiskriditkan ";
             $formattedText .= "Pemerintahan dan Polri dengan link sebagai berikut :\n\n";
             
@@ -833,7 +1000,7 @@ class Serp extends BaseController
                     }
                     
                     // Extract potential issues from snippets
-                    $snippet = strtolower($result['snippet']);
+                    $snippet = strtolower($result['snippet'] ?? '');
                     $issueKeywords = ['pemerintah', 'uu tni', 'ruu polri', 'indonesia gelap', 'ijazah', 'mayday'];
                     foreach ($issueKeywords as $issue) {
                         if (strpos($snippet, $issue) !== false) {
@@ -867,14 +1034,31 @@ class Serp extends BaseController
             }
             
             $formattedText .= "C. Terdapat " . $sentimentCounts['positive'] . " konten dengan sentimen positif dan " . $sentimentCounts['neutral'] . " konten netral, yang menunjukkan masih adanya keseimbangan narasi di media sosial terkait isu-isu tersebut.\n\n";
+            
+            // Customize recommendations based on engine type
             $formattedText .= "Prediksi :\n";
-            $formattedText .= "A. Konten narasi negatif akan terus muncul sampai tujuan yang diinginkan tercapai yaitu pembatalan UU TNI, Revisi RUU POLRI dan perlawanan terhadap kebijakan pemerintah dengan issu tema Indonesia Gelap serta pengakuan Ijazah Palsu Jokowi dengan cara provokasi di seluruh media sosial.\n";
-            $formattedText .= "B. Konten narasi negatif di media sosial mulai mengarah pada ajakan dan provokasi untuk melakukan pergerakan / perlawanan secara masif dan sistimatis pada peringatan mayday di seluruh daerah wilayah Jawa Tengah.\n\n";
+            
+            if ($engine === 'twitter' || $engine === 'reddit') {
+                $formattedText .= "A. Konten narasi negatif di platform media sosial {$engineTitle} akan terus muncul dan dapat menyebar dengan cepat karena sifat viralitas platform tersebut.\n";
+                $formattedText .= "B. Diskusi di {$engineTitle} cenderung lebih terpolarisasi dan emosional, sehingga berpotensi memicu reaksi yang lebih intens dari masyarakat.\n\n";
+            } else if ($engine === 'youtube') {
+                $formattedText .= "A. Konten video di {$engineTitle} memiliki dampak yang lebih kuat karena kombinasi visual dan audio, sehingga narasi negatif dapat memiliki pengaruh yang lebih besar terhadap persepsi publik.\n";
+                $formattedText .= "B. Video-video dengan narasi negatif berpotensi mendapatkan lebih banyak penonton dan engagement, terutama jika algoritma platform mempromosikannya ke audiens yang lebih luas.\n\n";
+            } else {
+                $formattedText .= "A. Konten narasi negatif akan terus muncul sampai tujuan yang diinginkan tercapai yaitu pembatalan UU TNI, Revisi RUU POLRI dan perlawanan terhadap kebijakan pemerintah dengan issu tema Indonesia Gelap serta pengakuan Ijazah Palsu Jokowi dengan cara provokasi di seluruh media sosial.\n";
+                $formattedText .= "B. Konten narasi negatif di media sosial mulai mengarah pada ajakan dan provokasi untuk melakukan pergerakan / perlawanan secara masif dan sistimatis pada peringatan mayday di seluruh daerah wilayah Jawa Tengah.\n\n";
+            }
             
             $formattedText .= "Rekomendasi :\n";
             $formattedText .= "A. Laksanakan pulbaket dan penyelidikan lebih mendalam terhadap pegiat media sosial yang telah membuat konten narasi negatif dan provokatif sehingga dapat diketahui maksud dan tujuannya.\n";
-            $formattedText .= "B. Laksanakan kontra terhadap konten narasi negatif beserta pemilik akun medsos agar konten tersebut tidak  berkembang menjadi viral dan menggiring opini negatif serta memprovokasi masyarakat untuk melakukan perlawanan terhadap pemerintah dengan cara berunjuk rasa.\n";
-            $formattedText .= "C. Laksanakan kontra dengan pembuatan konten isu tandingan yg berbeda guna penggembosan konten narasi negatif terkait penolakan UU TNI,  RUU Polri, Aksi Mayday dan kebijakan pemerintah dgn isu Indonesia gelap.\n\n";
+            
+            if ($engine === 'twitter' || $engine === 'reddit' || $engine === 'youtube') {
+                $formattedText .= "B. Laksanakan kontra narasi di platform {$engineTitle} dengan memperhatikan karakteristik khusus platform tersebut untuk efektivitas yang lebih baik.\n";
+            } else {
+                $formattedText .= "B. Laksanakan kontra terhadap konten narasi negatif beserta pemilik akun medsos agar konten tersebut tidak berkembang menjadi viral dan menggiring opini negatif serta memprovokasi masyarakat untuk melakukan perlawanan terhadap pemerintah dengan cara berunjuk rasa.\n";
+            }
+            
+            $formattedText .= "C. Laksanakan kontra dengan pembuatan konten isu tandingan yg berbeda guna penggembosan konten narasi negatif terkait penolakan UU TNI, RUU Polri, Aksi Mayday dan kebijakan pemerintah dgn isu Indonesia gelap.\n\n";
             
             $formattedText .= "Prediksi kata kunci :\n{$keywordPrediction}\n\n";
             

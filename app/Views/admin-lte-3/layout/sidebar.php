@@ -129,6 +129,14 @@
                                 <p>Aplikasi</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('pengaturan/api-tokens') ?>"
+                                class="nav-link <?= isMenuActive('pengaturan/api-tokens') ? 'active' : '' ?>">
+                                <?= nbs(3) ?>
+                                <i class="fas fa-key nav-icon"></i>
+                                <p>API Tokens</p>
+                            </a>
+                        </li>
                     </ul>
                 </li>
             </ul>

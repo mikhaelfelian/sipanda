@@ -8,7 +8,7 @@
                 <!-- Search Form Card -->
                 <div class="card rounded-0">
                     <div class="card-header">
-                        <h3 class="card-title">Pencarian Google</h3>
+                        <h3 class="card-title">Pencarian Multi Platform</h3>
                     </div>
                     <div class="card-body">
                         <?= form_open('serp/search', ['method' => 'post']) ?>
@@ -17,62 +17,68 @@
                                 <input type="text" class="form-control rounded-0" id="query" name="query"
                                     placeholder="Masukkan kata kunci pencarian..." required minlength="3" maxlength="255">
                             </div>
+                            
+                            <div class="form-group">
+                                <label for="engine">Platform Pencarian</label>
+                                <select class="form-control rounded-0" id="engine" name="engine">
+                                    <option value="google">Google Web</option>
+                                    <option value="google_news">Google News</option>
+                                    <option value="google_images">Google Images</option>
+                                    <option value="google_scholar">Google Scholar</option>
+                                    <option value="youtube">YouTube</option>
+                                    <option value="twitter">Twitter/X</option>
+                                    <option value="reddit">Reddit</option>
+                                    <option value="bing">Bing</option>
+                                </select>
+                            </div>
+                            
                             <div class="form-group">
                                 <label for="country">Negara</label>
                                 <select class="form-control rounded-0" id="country" name="country">
                                     <option value="id" selected>Indonesia</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label for="region">Provinsi</label>
-                                <select class="form-control rounded-0" id="region" name="region">
-                                    <option value="">Semua Provinsi</option>
-                                    <option value="aceh">Aceh</option>
-                                    <option value="sumatera_utara">Sumatera Utara</option>
-                                    <option value="sumatera_barat">Sumatera Barat</option>
-                                    <option value="riau">Riau</option>
-                                    <option value="kepulauan_riau">Kepulauan Riau</option>
-                                    <option value="jambi">Jambi</option>
-                                    <option value="sumatera_selatan">Sumatera Selatan</option>
-                                    <option value="bangka_belitung">Kepulauan Bangka Belitung</option>
-                                    <option value="bengkulu">Bengkulu</option>
-                                    <option value="lampung">Lampung</option>
-                                    <option value="jakarta">DKI Jakarta</option>
-                                    <option value="banten">Banten</option>
-                                    <option value="jawa_barat">Jawa Barat</option>
-                                    <option value="jawa_tengah">Jawa Tengah</option>
-                                    <option value="yogyakarta">DI Yogyakarta</option>
-                                    <option value="jawa_timur">Jawa Timur</option>
-                                    <option value="bali">Bali</option>
-                                    <option value="nusa_tenggara_barat">Nusa Tenggara Barat</option>
-                                    <option value="nusa_tenggara_timur">Nusa Tenggara Timur</option>
-                                    <option value="kalimantan_barat">Kalimantan Barat</option>
-                                    <option value="kalimantan_tengah">Kalimantan Tengah</option>
-                                    <option value="kalimantan_selatan">Kalimantan Selatan</option>
-                                    <option value="kalimantan_timur">Kalimantan Timur</option>
-                                    <option value="kalimantan_utara">Kalimantan Utara</option>
-                                    <option value="sulawesi_utara">Sulawesi Utara</option>
-                                    <option value="gorontalo">Gorontalo</option>
-                                    <option value="sulawesi_tengah">Sulawesi Tengah</option>
-                                    <option value="sulawesi_barat">Sulawesi Barat</option>
-                                    <option value="sulawesi_selatan">Sulawesi Selatan</option>
-                                    <option value="sulawesi_tenggara">Sulawesi Tenggara</option>
-                                    <option value="maluku">Maluku</option>
-                                    <option value="maluku_utara">Maluku Utara</option>
-                                    <option value="papua_barat">Papua Barat</option>
-                                    <option value="papua">Papua</option>
-                                    <option value="papua_selatan">Papua Selatan</option>
-                                    <option value="papua_tengah">Papua Tengah</option>
-                                    <option value="papua_pegunungan">Papua Pegunungan</option>
-                                </select>
-                            </div>
+                            
                             <div class="form-group form-check">
-                                <input type="checkbox" class="form-check-input" id="deep_search" name="deep_search"
-                                    value="1">
-                                <label class="form-check-label" for="deep_search">Pencarian Mendalam (Tahun Terakhir)</label>
+                                <input type="checkbox" class="form-check-input" id="deep_search" name="deep_search">
+                                <label class="form-check-label" for="deep_search">Pencarian Mendalam (Hasil Lebih Luas)</label>
                             </div>
+                            
+                            <div class="form-group form-check">
+                                <input type="checkbox" class="form-check-input" id="use_ai" name="use_ai">
+                                <label class="form-check-label" for="use_ai">Gunakan AI untuk Analisis Hasil</label>
+                            </div>
+                            
                             <button type="submit" class="btn btn-primary rounded-0">Cari</button>
                         <?= form_close() ?>
+                    </div>
+                </div>
+                
+                <!-- Search Tips Card -->
+                <div class="card rounded-0 mt-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Tips Pencarian</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Tips Umum</h5>
+                                <ul>
+                                    <li>Gunakan kata kunci yang spesifik untuk hasil yang lebih relevan</li>
+                                    <li>Pencarian mendalam akan memberikan hasil yang lebih lengkap</li>
+                                    <li>Aktivasi mode analisis AI untuk mendapatkan wawasan tambahan</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Tips Platform Khusus</h5>
+                                <ul>
+                                    <li><strong>Google News</strong>: Cocok untuk berita terkini</li>
+                                    <li><strong>YouTube</strong>: Untuk mencari konten video</li>
+                                    <li><strong>Twitter/X</strong>: Untuk mencari trending topics dan diskusi terkini</li>
+                                    <li><strong>Reddit</strong>: Untuk diskusi mendalam dan komunitas</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

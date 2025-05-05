@@ -35,6 +35,20 @@ class ApifyXScraper
     protected $timeout = 120;
     
     /**
+     * X API key
+     *
+     * @var string
+     */
+    protected $xApiKey;
+    
+    /**
+     * X API secret
+     *
+     * @var string
+     */
+    protected $xApiSecret;
+    
+    /**
      * Constructor
      * 
      * @param string|null $apiKey APIFY API key
@@ -75,15 +89,8 @@ class ApifyXScraper
     private function getStoredToken()
     {
         try {
-            $db = \Config\Database::connect();
-            $query = $db->table('tbl_api_tokens')
-                        ->where('provider', 'apify')
-                        ->where('is_active', 1)
-                        ->get();
-                        
-            $result = $query->getRow();
-            
-            return $result ? $result->token : null;
+            $tokenModel = new \App\Models\ApiTokenModel();
+            return $tokenModel->getActiveToken('apify');
         } catch (\Exception $e) {
             log_message('error', 'Error getting APIFY token: ' . $e->getMessage());
             return null;
@@ -99,35 +106,12 @@ class ApifyXScraper
     private function storeToken($token)
     {
         try {
-            $db = \Config\Database::connect();
-            
-            // Check if token exists
-            $exists = $db->table('tbl_api_tokens')
-                        ->where('provider', 'apify')
-                        ->countAllResults() > 0;
-            
-            $data = [
-                'provider' => 'apify',
-                'token' => $token,
-                'is_active' => 1,
-                'updated_at' => date('Y-m-d H:i:s')
-            ];
-            
-            if ($exists) {
-                // Update existing token
-                $result = $db->table('tbl_api_tokens')
-                            ->where('provider', 'apify')
-                            ->update($data);
-            } else {
-                // Add created_at for new records
-                $data['created_at'] = date('Y-m-d H:i:s');
-                
-                // Insert new token
-                $result = $db->table('tbl_api_tokens')
-                            ->insert($data);
-            }
-            
-            return $result;
+            $tokenModel = new \App\Models\ApiTokenModel();
+            return $tokenModel->storeToken(
+                'apify', 
+                $token, 
+                'APIFY API token for X.com scraping'
+            );
         } catch (\Exception $e) {
             log_message('error', 'Error storing APIFY token: ' . $e->getMessage());
             return false;
@@ -147,13 +131,47 @@ class ApifyXScraper
     }
     
     /**
-     * Get user profile by username
+     * Set X API credentials
+     * 
+     * @param string $apiKey X API key
+     * @param string $apiSecret X API secret
+     * @return $this
+     */
+    public function setXApiCredentials($apiKey, $apiSecret)
+    {
+        $this->xApiKey = $apiKey;
+        $this->xApiSecret = $apiSecret;
+        return $this;
+    }
+    
+    /**
+     * Check if X API credentials are set
+     * 
+     * @return bool
+     */
+    public function hasXApiCredentials()
+    {
+        return !empty($this->xApiKey) && !empty($this->xApiSecret);
+    }
+    
+    /**
+     * Get user profile directly from X API if credentials are available
+     * Falls back to APIFY if not
      * 
      * @param string $username X.com username (without @)
      * @return array|null User profile data or null on error
      */
     public function getUserProfile($username)
     {
+        // Try to get profile using X API if credentials are available
+        if ($this->hasXApiCredentials()) {
+            $profile = $this->getUserProfileFromXApi($username);
+            if ($profile !== null) {
+                return $profile;
+            }
+        }
+        
+        // Fall back to APIFY if X API fails or credentials not available
         try {
             // Sanitize username (remove @ if present)
             $username = ltrim($username, '@');
@@ -176,6 +194,153 @@ class ApifyXScraper
             return null;
         } catch (\Exception $e) {
             log_message('error', 'Error fetching X profile: ' . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Get user profile using X API v2
+     * 
+     * @param string $username X.com username (without @)
+     * @return array|null User profile data or null on error
+     */
+    protected function getUserProfileFromXApi($username)
+    {
+        try {
+            // Sanitize username (remove @ if present)
+            $username = ltrim($username, '@');
+            
+            // Bearer token is required for X API
+            $bearerToken = $this->getXBearerToken();
+            if (empty($bearerToken)) {
+                log_message('error', 'Failed to obtain X API bearer token');
+                return $this->getDefaultUserProfile($username);
+            }
+            
+            // Endpoint for user lookup by username
+            $url = "https://api.twitter.com/2/users/by/username/{$username}?user.fields=description,created_at,location,profile_image_url,public_metrics,url,verified";
+            
+            // Set up cURL request
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $bearerToken,
+                'Content-Type: application/json'
+            ]);
+            
+            // Execute request
+            $response = curl_exec($ch);
+            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            // Check for successful response
+            if ($statusCode == 200) {
+                $data = json_decode($response, true);
+                
+                // Map X API response to our expected format
+                if (isset($data['data'])) {
+                    $userData = $data['data'];
+                    
+                    return [
+                        'username' => $userData['username'],
+                        'displayName' => $userData['name'],
+                        'description' => $userData['description'] ?? '',
+                        'verified' => $userData['verified'] ?? false,
+                        'profileImageUrl' => $userData['profile_image_url'] ?? '',
+                        'location' => $userData['location'] ?? '',
+                        'url' => $userData['url'] ?? '',
+                        'followersCount' => $userData['public_metrics']['followers_count'] ?? 0,
+                        'followingCount' => $userData['public_metrics']['following_count'] ?? 0,
+                        'statusesCount' => $userData['public_metrics']['tweet_count'] ?? 0,
+                        'createdAt' => $userData['created_at'] ?? '',
+                    ];
+                }
+            } else {
+                log_message('error', 'X API error: ' . $response);
+            }
+            
+            // Return default profile if user not found
+            return $this->getDefaultUserProfile($username);
+        } catch (\Exception $e) {
+            log_message('error', 'Error fetching X profile via API: ' . $e->getMessage());
+            return $this->getDefaultUserProfile($username);
+        }
+    }
+    
+    /**
+     * Get default user profile when real profile can't be fetched
+     * 
+     * @param string $username X.com username (without @)
+     * @return array Default profile data
+     */
+    protected function getDefaultUserProfile($username)
+    {
+        return [
+            'username' => $username,
+            'displayName' => 'Unknown User',
+            'description' => 'This profile temporarily could not be accessed. The profile may exist on X.com but our system is currently unable to retrieve the data.',
+            'verified' => false,
+            'profileImageUrl' => '',
+            'location' => '',
+            'url' => '',
+            'followersCount' => 0,
+            'followingCount' => 0,
+            'statusesCount' => 0,
+            'createdAt' => '',
+            'isDefaultProfile' => true
+        ];
+    }
+    
+    /**
+     * Get bearer token for X API using app credentials
+     * 
+     * @return string|null Bearer token or null on error
+     */
+    protected function getXBearerToken()
+    {
+        try {
+            // Check if we have API credentials
+            if (!$this->hasXApiCredentials()) {
+                return null;
+            }
+            
+            // Endpoint for obtaining bearer token
+            $url = 'https://api.twitter.com/oauth2/token';
+            
+            // Create credentials string and encode
+            $credentials = base64_encode($this->xApiKey . ':' . $this->xApiSecret);
+            
+            // Set up cURL request
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Basic ' . $credentials,
+                'Content-Type: application/x-www-form-urlencoded;charset=UTF-8'
+            ]);
+            
+            // Execute request
+            $response = curl_exec($ch);
+            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            // Check for successful response
+            if ($statusCode == 200) {
+                $data = json_decode($response, true);
+                
+                if (isset($data['access_token'])) {
+                    return $data['access_token'];
+                }
+            } else {
+                log_message('error', 'Failed to get X API bearer token: ' . $response);
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting X API bearer token: ' . $e->getMessage());
             return null;
         }
     }
@@ -445,36 +610,159 @@ class ApifyXScraper
     }
     
     /**
-     * Run an APIFY task or actor
+     * Run an APIFY actor with the given input
      * 
      * @param string $actorId APIFY actor ID
      * @param array $input Input parameters for the actor
-     * @return array|null Results from the actor run
+     * @return array|null Result of the APIFY actor run
+     * @throws \Exception If an error occurs
      */
     protected function runTask($actorId, $input = [])
     {
-        if (empty($this->apiKey)) {
-            throw new \Exception('APIFY API key is not set');
-        }
-        
-        // Set up the cURL request to run the actor
-        $ch = curl_init($this->baseUrl . 'actor-tasks/' . $actorId . '/run-sync?token=' . $this->apiKey);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['contentType' => 'application/json', 'body' => $input]));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
-        
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpCode >= 200 && $httpCode < 300) {
+        try {
+            // Check if API key is set
+            if (empty($this->apiKey)) {
+                log_message('error', 'APIFY API key is not set. Cannot run task.');
+                throw new \Exception('API key not set. Please set up your APIFY API key.');
+            }
+            
+            // Prepare URL for the APIFY actor run
+            $url = $this->baseUrl . "acts/{$actorId}/runs";
+            
+            // Prepare input data
+            $data = [
+                'token' => $this->apiKey,
+                'json' => json_encode($input)
+            ];
+            
+            // Set up cURL request
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
+            
+            // Execute request
+            $response = curl_exec($ch);
+            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            
+            // Check for cURL errors
+            if (curl_errno($ch)) {
+                $error = curl_error($ch);
+                curl_close($ch);
+                log_message('error', "APIFY cURL error: {$error}");
+                throw new \Exception("Network error: {$error}");
+            }
+            
+            curl_close($ch);
+            
+            // Check for successful response
+            if ($statusCode != 200 && $statusCode != 201) {
+                log_message('error', "APIFY API error: Status code {$statusCode}, Response: {$response}");
+                
+                // Try to extract a meaningful error message
+                $errorData = json_decode($response, true);
+                $errorMessage = isset($errorData['error']['message']) 
+                    ? $errorData['error']['message'] 
+                    : "API returned status code {$statusCode}";
+                    
+                throw new \Exception("API error: {$errorMessage}");
+            }
+            
+            // Decode response
             $data = json_decode($response, true);
-            return $data['data']['items'] ?? null;
-        } else {
-            log_message('error', 'APIFY API error: HTTP code ' . $httpCode . ', Response: ' . $response);
-            throw new \Exception('APIFY API error: HTTP code ' . $httpCode);
+            
+            // Check if the run was started successfully
+            if (!isset($data['data']['id'])) {
+                log_message('error', "APIFY run not started: " . json_encode($data));
+                throw new \Exception('Failed to start APIFY task.');
+            }
+            
+            // Get run ID
+            $runId = $data['data']['id'];
+            
+            // Wait for the run to complete
+            return $this->waitForTaskCompletion($runId);
+        } catch (\Exception $e) {
+            log_message('error', 'Error running APIFY task: ' . $e->getMessage());
+            throw $e;
         }
+    }
+    
+    /**
+     * Wait for an APIFY run to complete and fetch the results
+     * 
+     * @param string $runId APIFY run ID
+     * @return array|null Results from the run
+     * @throws \Exception If an error occurs
+     */
+    protected function waitForTaskCompletion($runId)
+    {
+        // Maximum number of attempts to check status
+        $maxAttempts = 30;
+        
+        // Interval between status checks in seconds
+        $checkInterval = 3;
+        
+        // URL for checking run status
+        $statusUrl = $this->baseUrl . "actor-runs/{$runId}?token={$this->apiKey}";
+        
+        // URL for getting run results
+        $datasetUrl = $this->baseUrl . "actor-runs/{$runId}/dataset/items?token={$this->apiKey}";
+        
+        // Loop to check run status
+        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+            // Wait before next check
+            if ($attempt > 0) {
+                sleep($checkInterval);
+            }
+            
+            // Check run status
+            $ch = curl_init($statusUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $response = curl_exec($ch);
+            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            // Check for successful response
+            if ($statusCode != 200) {
+                log_message('error', "Error checking APIFY run status: Status code {$statusCode}, Response: {$response}");
+                continue;
+            }
+            
+            // Parse status data
+            $statusData = json_decode($response, true);
+            
+            // Check if run has finished
+            if (isset($statusData['data']['status']) && in_array($statusData['data']['status'], ['SUCCEEDED', 'FAILED', 'TIMED_OUT', 'ABORTED'])) {
+                // If run failed, log error and return null
+                if ($statusData['data']['status'] !== 'SUCCEEDED') {
+                    log_message('error', "APIFY run {$runId} failed with status: " . $statusData['data']['status']);
+                    throw new \Exception("Task failed with status: " . $statusData['data']['status']);
+                }
+                
+                // Get results
+                $ch = curl_init($datasetUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $response = curl_exec($ch);
+                $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                
+                // Check for successful response
+                if ($statusCode != 200) {
+                    log_message('error', "Error fetching APIFY run results: Status code {$statusCode}, Response: {$response}");
+                    throw new \Exception("Error fetching results: Status code {$statusCode}");
+                }
+                
+                // Parse and return results
+                $results = json_decode($response, true);
+                return $results ?? [];
+            }
+        }
+        
+        // If we've reached the maximum number of attempts, log error and throw exception
+        log_message('error', "APIFY run {$runId} did not complete within the maximum wait time");
+        throw new \Exception("Task did not complete within the maximum wait time");
     }
 } 

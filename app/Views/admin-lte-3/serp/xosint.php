@@ -8,7 +8,7 @@
  * @created   2025-04-30
  */
 ?>
-<?= $this->extend($this->theme->getThemePath() . '/layout/page_layout') ?>
+<?= $this->extend(theme_path('main')) ?>
 
 <?= $this->section('content') ?>
 <div class="content-header">
@@ -89,11 +89,11 @@
                                             <?php if (!empty($recent_searches)) : ?>
                                                 <?php foreach ($recent_searches as $search) : ?>
                                                     <li class="list-group-item">
-                                                        <a href="#" class="search-item" data-username="<?= esc($search['query']) ?>">
-                                                            @<?= esc($search['query']) ?>
+                                                        <a href="#" class="search-item" data-username="<?= esc($search->search_query) ?>">
+                                                            @<?= esc($search->search_query) ?>
                                                         </a>
                                                         <span class="float-right text-muted">
-                                                            <?= date('d M Y', strtotime($search['timestamp'])) ?>
+                                                            <?= date('d M Y', strtotime($search->search_date)) ?>
                                                         </span>
                                                     </li>
                                                 <?php endforeach; ?>
@@ -206,15 +206,6 @@
                                                 <select class="form-control" id="country-code" name="country">
                                                     <option value="">Worldwide</option>
                                                     <option value="ID">Indonesia</option>
-                                                    <option value="US">United States</option>
-                                                    <option value="GB">United Kingdom</option>
-                                                    <option value="JP">Japan</option>
-                                                    <option value="BR">Brazil</option>
-                                                    <option value="AU">Australia</option>
-                                                    <option value="CA">Canada</option>
-                                                    <option value="FR">France</option>
-                                                    <option value="DE">Germany</option>
-                                                    <option value="IN">India</option>
                                                 </select>
                                             </div>
                                             <button type="submit" class="btn btn-primary">
@@ -357,13 +348,23 @@ $(document).ready(function() {
         
         // Profile header
         html += '<div class="col-md-12">';
+        
+        // Add alert for error or not found profiles
+        if (profile.isDefaultProfile) {
+            var alertClass = profile.hasError ? 'danger' : 'warning';
+            html += '<div class="alert alert-' + alertClass + ' mb-3">';
+            html += '<i class="fas fa-exclamation-circle mr-2"></i> ';
+            html += profile.description || 'Profile information temporarily unavailable.';
+            html += '</div>';
+        }
+        
         html += '<div class="d-flex align-items-center mb-3">';
         
         // Profile image
         if (profile.profileImageUrl) {
             html += '<img src="' + profile.profileImageUrl + '" alt="Profile Image" class="img-circle mr-3" style="width: 80px; height: 80px;">';
         } else {
-            html += '<div class="img-circle mr-3 bg-primary d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;"><i class="fas fa-user fa-3x"></i></div>';
+            html += '<div class="img-circle mr-3 bg-secondary d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;"><i class="fas fa-user fa-3x"></i></div>';
         }
         
         // Name and username
@@ -376,8 +377,8 @@ $(document).ready(function() {
         html += '<p class="text-muted mb-0">@' + profile.username + '</p>';
         
         // Account creation
-        if (profile.created) {
-            var created = new Date(profile.created);
+        if (profile.createdAt) {
+            var created = new Date(profile.createdAt);
             html += '<small class="text-muted">Joined ' + created.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) + '</small>';
         }
         
@@ -385,12 +386,12 @@ $(document).ready(function() {
         html += '</div>';
         
         // Bio
-        if (profile.bio) {
-            html += '<p>' + profile.bio + '</p>';
+        if (profile.description && !profile.isDefaultProfile) {
+            html += '<p>' + profile.description + '</p>';
         }
         
         // Location and URL
-        if (profile.location || profile.url) {
+        if ((profile.location || profile.url) && !profile.isDefaultProfile) {
             html += '<p class="mb-2">';
             if (profile.location) {
                 html += '<i class="fas fa-map-marker-alt mr-1"></i> ' + profile.location + ' ';
@@ -405,7 +406,7 @@ $(document).ready(function() {
         
         // Stats cards
         html += '<div class="col-md-4">';
-        html += '<div class="info-box bg-primary">';
+        html += '<div class="info-box ' + (profile.isDefaultProfile ? 'bg-secondary' : 'bg-primary') + '">';
         html += '<span class="info-box-icon"><i class="fas fa-users"></i></span>';
         html += '<div class="info-box-content">';
         html += '<span class="info-box-text">Followers</span>';
@@ -415,17 +416,17 @@ $(document).ready(function() {
         html += '</div>';
         
         html += '<div class="col-md-4">';
-        html += '<div class="info-box bg-info">';
+        html += '<div class="info-box ' + (profile.isDefaultProfile ? 'bg-secondary' : 'bg-info') + '">';
         html += '<span class="info-box-icon"><i class="fas fa-user-friends"></i></span>';
         html += '<div class="info-box-content">';
         html += '<span class="info-box-text">Following</span>';
-        html += '<span class="info-box-number">' + (profile.friendsCount ? profile.friendsCount.toLocaleString() : '0') + '</span>';
+        html += '<span class="info-box-number">' + (profile.followingCount ? profile.followingCount.toLocaleString() : '0') + '</span>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
         
         html += '<div class="col-md-4">';
-        html += '<div class="info-box bg-success">';
+        html += '<div class="info-box ' + (profile.isDefaultProfile ? 'bg-secondary' : 'bg-success') + '">';
         html += '<span class="info-box-icon"><i class="fab fa-twitter"></i></span>';
         html += '<div class="info-box-content">';
         html += '<span class="info-box-text">Tweets</span>';
@@ -434,8 +435,8 @@ $(document).ready(function() {
         html += '</div>';
         html += '</div>';
         
-        // Tweet activity (if available)
-        if (analysis && analysis.tweetActivity) {
+        // Tweet activity (if available and not default profile)
+        if (analysis && analysis.tweetActivity && !profile.isDefaultProfile) {
             html += '<div class="col-md-12 mt-3">';
             html += '<h5 class="mb-3">Tweet Activity Analysis</h5>';
             html += '<div class="row">';
@@ -536,11 +537,49 @@ $(document).ready(function() {
                 html += '</div>';
                 html += '</div>';
             }
+        } else if (profile.isDefaultProfile) {
+            // Show alternative content for default profile
+            html += '<div class="col-md-12 mt-4">';
+            html += '<div class="callout callout-info">';
+            html += '<h5>Profile Information Not Available</h5>';
+            html += '<p>We were unable to retrieve the profile data at this time, even though the profile might exist on X.com. This could be due to:</p>';
+            html += '<ul>';
+            html += '<li>API usage limitations</li>';
+            html += '<li>Temporary connectivity issues</li>';
+            html += '<li>The account having privacy restrictions</li>';
+            html += '<li>The account being recently suspended or renamed</li>';
+            html += '</ul>';
+            html += '<p>You can try visiting the profile directly on <a href="https://x.com/' + profile.username + '" target="_blank">X.com</a> or try searching again later.</p>';
+            html += '</div>';
+            
+            html += '<div class="card mt-3">';
+            html += '<div class="card-header">';
+            html += '<h3 class="card-title">Popular X.com Accounts</h3>';
+            html += '</div>';
+            html += '<div class="card-body p-0">';
+            html += '<ul class="list-group list-group-flush">';
+            html += '<li class="list-group-item"><a href="#" class="search-item" data-username="elonmusk">@elonmusk - Elon Musk</a></li>';
+            html += '<li class="list-group-item"><a href="#" class="search-item" data-username="BillGates">@BillGates - Bill Gates</a></li>';
+            html += '<li class="list-group-item"><a href="#" class="search-item" data-username="BarackObama">@BarackObama - Barack Obama</a></li>';
+            html += '<li class="list-group-item"><a href="#" class="search-item" data-username="NASA">@NASA - NASA</a></li>';
+            html += '<li class="list-group-item"><a href="#" class="search-item" data-username="jokowi">@jokowi - Joko Widodo</a></li>';
+            html += '</ul>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
         }
         
         html += '</div>';
         
         $('#profile-info-container').html(html);
+        
+        // Set up search item click events for recommended accounts
+        $('.search-item').on('click', function(e) {
+            e.preventDefault();
+            var username = $(this).data('username');
+            $('#username').val(username);
+            $('#profile-form').submit();
+        });
     }
 });
 </script>

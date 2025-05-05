@@ -49,7 +49,7 @@ class Pengaturan extends BaseController
                     'max_length' => 'Judul Aplikasi maksimal 100 karakter'
                 ]
             ],
-            'deskripsi_app' => [
+            'deskripsi' => [
                 'rules'  => 'required|min_length[10]',
                 'errors' => [
                     'required'   => 'Deskripsi Aplikasi harus diisi',
@@ -85,7 +85,7 @@ class Pengaturan extends BaseController
 
         $data = [
             'judul_app' => $this->request->getPost('judul_app'),
-            'deskripsi_app' => $this->request->getPost('deskripsi_app')
+            'deskripsi' => $this->request->getPost('deskripsi')
         ];
 
         // Process logo header upload

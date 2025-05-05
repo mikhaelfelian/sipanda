@@ -91,4 +91,23 @@ $routes->group('insights', ['filter' => 'auth'], function ($routes) {
 $routes->group('pengaturan', ['filter' => 'auth'], function ($routes) {
     $routes->get('app', 'Pengaturan::index');
     $routes->post('app/update', 'Pengaturan::update');
+    
+    // API Tokens management routes
+    $routes->get('api-tokens', 'ApiTokens::index');
+    $routes->get('api-tokens/add', 'ApiTokens::add');
+    $routes->post('api-tokens/add', 'ApiTokens::add');
+    $routes->get('api-tokens/edit/(:num)', 'ApiTokens::edit/$1');
+    $routes->post('api-tokens/edit/(:num)', 'ApiTokens::edit/$1');
+    $routes->get('api-tokens/delete/(:num)', 'ApiTokens::delete/$1');
+    $routes->get('api-tokens/toggle/(:num)', 'ApiTokens::toggle/$1');
+});
+
+/*
+ * OSINT Routes
+ */
+$routes->group('osint', ['filter' => 'auth'], function ($routes) {
+    $routes->get('/', 'Osint::index');
+    $routes->get('x', 'Osint::x');
+    $routes->post('x/profile', 'Osint::xProfile');
+    $routes->get('x/export-profile/(:segment)', 'Osint::xExportProfile/$1');
 });

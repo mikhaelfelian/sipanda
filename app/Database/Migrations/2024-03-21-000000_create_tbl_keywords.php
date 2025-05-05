@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateKeywordsTable extends Migration
+class Migration_2024_03_21_000000_create_tbl_keywords extends Migration
 {
     public function up()
     {
