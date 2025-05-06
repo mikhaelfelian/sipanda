@@ -1,4 +1,13 @@
 <?php
+/**
+ * SentimentAnalysis Controller
+ * 
+ * Controller for analyzing sentiment of text inputs
+ * Provides functionality for text sentiment analysis
+ * 
+ * @author    Mikhael Felian Waskito <mikhaelfelian@gmail.com>
+ * @date      2025-05-15
+ */
 
 namespace App\Controllers;
 
