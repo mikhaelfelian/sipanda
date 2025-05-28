@@ -977,8 +977,8 @@ class Serp extends BaseController
                 $greeting = 'siang';
             }
             
-            $formattedText .= "Selamat {$greeting} Komandan, Mohon ijin melaporkan pada hari {$hari_laporan} <division> melaksanakan Patroli Cyber di {$engineTitle} ";
-            $formattedText .= "terkait Issue : " . $keywordPrediction . " serta yang mendiskriditkan ";
+            $formattedText .= "Selamat {$greeting} Komandan, Mohon ijin melaporkan pada hari {$hari_laporan} Ditintelkam Polda Jateng melaksanakan Patroli Cyber di {$engineTitle} ";
+            $formattedText .= "terkait Issue : " . $keywordPrediction . " serta yang mendiskreditkan ";
             $formattedText .= "Pemerintahan dan Polri dengan link sebagai berikut :\n\n";
             
             $formattedText .= "Fakta - fakta :\n{$contentList}\n";
