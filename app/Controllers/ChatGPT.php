@@ -57,21 +57,21 @@ class ChatGPT extends Controller
                     'Authorization: Bearer ' . $this->apiKey
                 ],
                 CURLOPT_POSTFIELDS => json_encode([
-                    'model' => 'gpt-3.5-turbo',
+                    'model'     => 'gpt-3.5-turbo',
                     'messages' => [
                         [
-                            'role' => 'system',
-                            'content' => 'Kamu adalah asisten yang membantu dalam bahasa Indonesia. Berikan jawaban yang sopan dan formal.'
+                            'role'      => 'system',
+                            'content'   => 'Kamu adalah asisten yang membantu dalam bahasa Indonesia. Berikan jawaban yang sopan dan formal.'
                         ],
                         ['role' => 'user', 'content' => $userMessage]
                     ],
-                    'temperature' => 0.7,
-                    'max_tokens' => 150
+                    'temperature'   => 0.7,
+                    'max_tokens'    => 150
                 ])
             ]);
 
-            $response = curl_exec($ch);
-            $error = curl_error($ch);
+            $response   = curl_exec($ch);
+            $error      = curl_error($ch);
             curl_close($ch);
 
             if ($error) {
@@ -116,10 +116,10 @@ class ChatGPT extends Controller
         }
 
         try {
-            $userMessage = $this->request->getPost('message');
-            $model = $this->request->getPost('model') ?? 'gpt-3.5-turbo';
-            $temperature = floatval($this->request->getPost('temperature') ?? 0.7);
-            $maxTokens = intval($this->request->getPost('max_tokens') ?? 1000);
+            $userMessage    = $this->request->getPost('message');
+            $model          = $this->request->getPost('model') ?? 'gpt-3.5-turbo';
+            $temperature    = floatval($this->request->getPost('temperature') ?? 0.7);
+            $maxTokens      = intval($this->request->getPost('max_tokens') ?? 1000);
             
             if (empty($userMessage)) {
                 throw new \Exception('Pesan tidak boleh kosong');
@@ -136,9 +136,7 @@ class ChatGPT extends Controller
                 'message' => $response
             ]);
             
-        } catch (\Exception $e) {
-            log_message('error', '[ChatGPT] Error in ask(): ' . $e->getMessage());
-            
+        } catch (\Exception $e) {            
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
